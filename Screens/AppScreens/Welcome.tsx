@@ -1,10 +1,11 @@
 import { StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function WelcomePage(){
     return(
-        <View style={style.container}>
+        <SafeAreaView style={style.container}>
 
-        </View>
+        </SafeAreaView>
     );
 }
 
