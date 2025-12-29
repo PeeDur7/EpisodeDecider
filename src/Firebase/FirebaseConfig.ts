@@ -4,13 +4,13 @@ import { getAuth  } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyD3GM2HMziomv5iL0diPfFIdc59ZX2U6KM",
-    authDomain: "episodedecider.firebaseapp.com",
-    projectId: "episodedecider",
-    storageBucket: "episodedecider.firebasestorage.app",
-    messagingSenderId: "615221222966",
-    appId: "1:615221222966:web:6c063953fd5303d2260297",
-    measurementId: "G-S13FYGNLEX"
+    apiKey: process.env.FIREBASE_API_KEY,
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.FIREBASE_APP_ID,
+    measurementId: process.env.FIREBASE_MEASUREMENT_ID
   };
 
   const app = initializeApp(firebaseConfig);
