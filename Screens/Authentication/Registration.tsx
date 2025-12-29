@@ -5,6 +5,9 @@ import { RootStackParamList } from "../../Navigation/types";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Checkbox from "expo-checkbox";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc, query, collection, where, getDocs } from "firebase/firestore";
+import { db, auth } from "../../Firebase/FirebaseConfig";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function RegistrationPage(){
@@ -14,11 +17,118 @@ export default function RegistrationPage(){
     const [showPassword, setShowPassword] = useState(false);
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    const [emailError, setEmailError] = useState("");
+    const [passwordError, setPasswordError] = useState("");
+    const [confirmPasswordError, setConfirmPasswordError] = useState("");
+    const [usernameError, setUsernameError] = useState("");
     const navigation = useNavigation<NavigationProp>();
 
+    const handleUsernameChange = (text: string) => {
+        setUsername(text);
+        setUsernameError("");
+    };
+
+    const handleEmailChange = (text: string) => {
+        setEmail(text);
+        setEmailError("");
+    };
+
+    const handlePasswordChange = (text: string) => {
+        setPassword(text);
+        setPasswordError("");
+    };
+
+    const handleConfirmPasswordChange = (text: string) => {
+        setConfirmPassword(text);
+        setConfirmPasswordError("");
+    };
+
+    const isEmailValid = () => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if(!email.trim()){
+            setEmailError("Email is required");
+            return false;
+        }
+        if(!emailRegex.test(email)){
+            setEmailError("Email is an invalid format");
+            return false;
+        }
+        return true;
+    };
+
+    //only valid if password is longer than 6 characters and has atleast one capital character
+    const isPasswordValid = () => {
+        if (!password) {
+            setPasswordError("Password is required");
+            return false;
+        }
+        if(password.length < 6){
+            setPasswordError("Password needs to be at least 6 characters");
+            return false;
+        }
+        if(!/[A-Z]/.test(password)){
+            setPasswordError("Password is missing a capital character");
+            return false;
+        }
+        if(!confirmPassword || password !== confirmPassword){
+            setConfirmPasswordError("Passwords do not match");
+            return false;
+        }
+        return true;
+    };
+
+    //checks if username is not in database if so we can register user
+    const isUsernameValid = async (): Promise<boolean> => {
+        if (!username.trim()) {
+            setUsernameError("Username is required");
+            return false;
+        }
+        try {
+            const userRef = collection(db,"users");
+            const q = query(userRef, where("usernameLowerCase","==",username.toLowerCase()));
+            const querySnapShot = await getDocs(q);
+            if(!querySnapShot.empty){
+                setUsernameError("Username is already taken");
+                return false;
+            }
+            return true;
+        } catch (error) {
+            throw error;
+        }
+    };
+
     //must check if each input field is filled and matches the requirements before reigstering user through firebase
-    const registerUser = () => {
-        navigation.navigate("Login");
+    const registerUser = async () => {
+        setUsernameError("");
+        setEmailError("");
+        setPasswordError("");
+        setConfirmPasswordError("");
+
+        if (!isEmailValid() || !isPasswordValid()) return;
+
+        try{
+            const usernameValid = await isUsernameValid();
+            if(!usernameValid) return;
+            const userCredentials = await createUserWithEmailAndPassword(auth,email,password);
+            const user = userCredentials.user;
+            await setDoc(doc(db,"users",user.uid), {
+                username : username,
+                usernameLowerCase : username.toLowerCase(),
+                email : email,
+                uid : user.uid,
+                createdAt : new Date().toISOString()
+            });
+            navigation.navigate("Login");
+        } catch (error : any) {
+            if (error.code === "auth/email-already-in-use") {
+                setEmailError("This email is already registered");
+            } else if (error.code === "auth/invalid-email") {
+                setEmailError("Invalid email address");
+            } else if (error.code === "auth/weak-password") {
+                setPasswordError("Password is too weak");
+            } 
+        }
     };
 
     return(
@@ -29,43 +139,54 @@ export default function RegistrationPage(){
                     <View style={{width : "100%"}}>
                         <Text style={{marginLeft : 3, color : "white", fontWeight : "500", marginBottom : 5}}>Username</Text>
                         <TextInput 
-                            style={styles.username} 
-                            onChangeText={setUsername} 
+                            style={usernameError ? styles.errorStyle : styles.username} 
+                            onChangeText={handleUsernameChange} 
                             placeholder="Enter Username"
                             placeholderTextColor="white"
                             value={username}
+                            autoCapitalize="none"
                         />
+                        {usernameError ? (
+                            <Text style={styles.errorText}>{usernameError}</Text>
+                        ) : null}
                     </View>
                     <View style={{width : "100%"}}>
                         <Text style={{marginLeft : 3, color : "white", fontWeight : "500", marginBottom : 5}}>Email</Text>
                         <TextInput 
-                            style={styles.email} 
-                            onChangeText={setEmail} 
+                            style={emailError ? styles.errorStyle : styles.email} 
+                            onChangeText={handleEmailChange} 
                             placeholder="Enter Email"
                             placeholderTextColor="white"
                             keyboardType="email-address"
                             value={email}
+                            autoCapitalize="none"
                         />
+                        {emailError ? (
+                            <Text style={styles.errorText}>{emailError}</Text>
+                        ) : null}
                     </View>
                     <View style={styles.passwordContainer}>
                         <View style={{width : "100%"}}>
                             <Text style={{marginLeft : 3, color : "white", fontWeight : "500", marginBottom : 5}}>Password</Text>
                             <TextInput 
-                                style={styles.password} 
-                                onChangeText={setPassword} 
+                                style={passwordError ? styles.errorStyle : styles.password} 
+                                onChangeText={handlePasswordChange} 
                                 placeholder="Enter Password"
                                 placeholderTextColor="white"
                                 secureTextEntry={!showPassword}
                                 value={password}
                             />
+                            {passwordError ? (
+                                <Text style={styles.errorText}>{passwordError}</Text>
+                            ) : null}
                             <Pressable
-                                style={{ flexDirection: "row", alignItems: "center", marginTop: 8 }}
+                                style={{ flexDirection: "row", alignItems: "center", marginTop: 8, marginLeft : 5 }}
                                 onPress={() => setShowPassword(prev => !prev)}
                                 >
                                 <Checkbox
                                     value={showPassword}
                                     onValueChange={setShowPassword}
-                                    style={{marginRight : 5}}
+                                    style={{marginRight : 5, borderRadius : 5}}
                                 />
                                 <Text style={{color : "white", fontWeight : "500"}}>Show Password</Text>
                             </Pressable>
@@ -75,21 +196,24 @@ export default function RegistrationPage(){
                         <View style={{width : "100%"}}>
                             <Text style={{marginLeft : 3, color : "white", fontWeight : "500", marginBottom : 5}}>Confirm Password</Text>
                             <TextInput 
-                                style={styles.confirmPassword} 
-                                onChangeText={setConfirmPassword} 
+                                style={confirmPasswordError ? styles.errorStyle : styles.confirmPassword} 
+                                onChangeText={handleConfirmPasswordChange} 
                                 placeholder="Confirm Password"
                                 placeholderTextColor="white"
                                 secureTextEntry={!showConfirmPassword}
                                 value={confirmPassword}
                             />
+                            {confirmPasswordError ? (
+                                <Text style={styles.errorText}>{confirmPasswordError}</Text>
+                            ) : null}
                             <Pressable
-                                style={{ flexDirection: "row", alignItems: "center", marginTop: 8 }}
+                                style={{ flexDirection: "row", alignItems: "center", marginTop: 8, marginLeft : 5 }}
                                 onPress={() => setShowConfirmPassword(prev => !prev)}
                                 >
                                 <Checkbox
                                     value={showConfirmPassword}
                                     onValueChange={setShowConfirmPassword}
-                                    style={{marginRight : 5}}
+                                    style={{marginRight : 5, borderRadius : 5}}
                                 />
                                 <Text style={{color : "white", fontWeight : "500"}}>Show Password</Text>
                             </Pressable>
@@ -114,11 +238,10 @@ const styles = StyleSheet.create({
         fontSize : 30,
         color : "white",
         fontWeight : "600",
-        marginBottom: 15,
         marginTop : 20
     },
     textContainer : {
-        marginTop : 30,
+        marginTop : 15,
         alignItems : "center",
         padding: 20,
         width: "95%"
@@ -181,5 +304,21 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         fontSize : 15,
         paddingVertical : 12,
+    },
+    errorText : {
+        color: "#FF6666",
+        fontSize: 12,
+        marginLeft: 5,
+        marginBottom: 20,
+        marginTop: 2
+    },
+    errorStyle : {
+        color : "white",  
+        fontWeight : "500",
+        borderWidth: 2,
+        borderColor: "#FF4444",  
+        borderRadius: 8,
+        padding: 12,
+        width: "100%"
     }
 });
