@@ -8,6 +8,7 @@ import Checkbox from "expo-checkbox";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, query, collection, where, getDocs } from "firebase/firestore";
 import { db, auth } from "../../Firebase/FirebaseConfig";
+import { Ionicons } from '@expo/vector-icons';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function RegistrationPage(){
@@ -134,6 +135,12 @@ export default function RegistrationPage(){
     return(
         <>
             <SafeAreaView style={styles.container}>
+                <Pressable
+                    style={styles.backButton}
+                    onPress={() => navigation.goBack()}
+                >
+                    <Ionicons name="arrow-back" size={28} color="white"/>
+                </Pressable>
                 <Text style={styles.title}>Create an Account</Text>
                 <View style={styles.textContainer}>
                     <View style={{width : "100%"}}>
@@ -233,6 +240,13 @@ const styles = StyleSheet.create({
         backgroundColor : "#3A3A3C",
         flex : 1,
         alignItems : "center"
+    },
+    backButton : {
+        position: "absolute",
+        top: 50,
+        left: 20,
+        zIndex: 10,
+        padding: 10
     },
     title : {
         fontSize : 30,
