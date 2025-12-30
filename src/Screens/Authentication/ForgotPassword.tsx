@@ -42,13 +42,14 @@ export default function ForgotPasswordPage(){
         try{
             await sendPasswordResetEmail(auth,email);
             navigation.navigate("Login");
-            setLoading(false);
         } catch(error : any){
             if (error.code === "auth/too-many-requests") {
                 setEmailError("Too many attempts. Try again later");
             } else {
                 setEmailError("Failed to send reset email");
             }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -102,8 +103,8 @@ const styles = StyleSheet.create({
     },
     backButton : {
         position: "absolute",
-        top: 40,
-        left: 5,
+        top: 50,
+        left: 10,
         zIndex: 10,
         padding: 10,
     },

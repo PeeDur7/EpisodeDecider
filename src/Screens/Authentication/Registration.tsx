@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../../Navigation/types";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -126,7 +126,6 @@ export default function RegistrationPage(){
                 createdAt : new Date().toISOString()
             });
             navigation.navigate("Login");
-            setLoading(false);
         } catch (error : any) {
             if (error.code === "auth/email-already-in-use") {
                 setEmailError("This email is already registered");
@@ -135,6 +134,8 @@ export default function RegistrationPage(){
             } else if (error.code === "auth/weak-password") {
                 setPasswordError("Password is too weak");
             }
+            setLoading(false);
+        } finally {
             setLoading(false);
         }
     };
@@ -250,8 +251,8 @@ const styles = StyleSheet.create({
     },
     backButton : {
         position: "absolute",
-        top: 40,
-        left: 5,
+        top: 50,
+        left: 10,
         zIndex: 10,
         padding: 10
     },
