@@ -133,7 +133,7 @@ export default function LoginPage(){
                     <Pressable
                         onPress={() => navigation.navigate("Registration")}
                     >
-                        <Text style={styles.linksText}>Don't have an account? Click here</Text>
+                        <Text style={styles.linksText}>Don't have an account?</Text>
                     </Pressable>
                     <Pressable 
                         onPress={() => navigation.navigate("ForgotPassword")}
@@ -141,6 +141,12 @@ export default function LoginPage(){
                         <Text style={styles.linksText}>Forgot password?</Text>
                     </Pressable>
                 </View>
+                <Pressable
+                    onPress={loginUser}
+                    style={styles.loginButton}
+                >
+                    <Text style={styles.loginButtonText}>Login</Text>
+                </Pressable>
             </View>
         </SafeAreaView>
     );
@@ -150,7 +156,7 @@ const styles = StyleSheet.create({
     container : {
         backgroundColor : "#3A3A3C",
         flex : 1,
-        alignItems : "center"
+        alignItems : "center",
     },
     backButton : {
         position: "absolute",
@@ -160,30 +166,76 @@ const styles = StyleSheet.create({
         padding: 10,
     },
     title : {
-
+        fontSize : 30,
+        color : "white",
+        fontWeight : "600",
+        marginTop : 180
     },
     textContainer : {
-
+        marginTop : 0,
+        alignItems : "center",
+        padding: 20,
+        width: "95%"
     },
     errorStyle : {
-
+        color : "white",  
+        fontWeight : "500",
+        borderWidth: 2,
+        borderColor: "#FF4444",  
+        borderRadius: 8,
+        padding: 12,
+        width: "100%"
     },
     errorText : {
-
+        color: "#FF6666",
+        fontSize: 12,
+        marginLeft: 5,
+        marginBottom: 20,
+        marginTop: 2
     },
     email : {
-
+        color : "white",
+        fontWeight : "500",
+        borderWidth: 2,
+        borderColor: "white",
+        borderRadius: 8,
+        padding: 12,
+        width: "100%",
+        marginBottom: 30
     },
     passwordContainer : {
-
+        width: "100%",
+        marginBottom: 15
     },
     password : {
-        
+        color : "white",
+        fontWeight : "500",
+        borderWidth: 2,
+        borderColor: "white",
+        borderRadius: 8,
+        padding: 12,
+        width: "100%"
     },
     links : {
-
+        flexDirection : "row",
     },
     linksText : {
-
+        color : "#42A5F5",
+        fontWeight : "500",
+        paddingHorizontal : 25 ,
+        fontSize : 15
+    },
+    loginButton : {
+        marginTop : 30,
+        backgroundColor : "#03AC13",        
+        borderRadius : 8,
+        width: "100%",
+        alignItems: "center"
+    },
+    loginButtonText : {
+        color : "white",
+        fontWeight: "600",
+        fontSize : 15,
+        paddingVertical : 12,
     }
 });

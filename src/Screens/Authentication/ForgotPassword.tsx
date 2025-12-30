@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
         fontSize : 30,
         color : "white",
         fontWeight : "600",
-        marginTop : 20
+        marginTop : 200
     }, 
     subtitle : {
         fontSize : 14,
@@ -122,7 +122,8 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginBottom: 20,
         lineHeight: 20,
-        maxWidth: "80%"
+        maxWidth: "80%",
+        fontStyle : "italic"
     },
     textContainer : {
         marginTop : 0,

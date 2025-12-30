@@ -237,6 +237,12 @@ export default function RegistrationPage(){
                     <Pressable style={styles.signUpButton} onPress={registerUser} disabled={loading}>
                         <Text style={styles.signUpButtonText}> Sign Up</Text>
                     </Pressable>
+                    <View style={styles.loginLink}>
+                        <Text style={styles.loginText}>Already have an account? </Text>
+                        <Pressable onPress={() => navigation.navigate("Login")}>
+                            <Text style={styles.loginLinkText}>Sign in</Text>
+                        </Pressable>
+                    </View>
                 </View>
             </SafeAreaView>
         </>
@@ -260,7 +266,7 @@ const styles = StyleSheet.create({
         fontSize : 30,
         color : "white",
         fontWeight : "600",
-        marginTop : 20
+        marginTop : 80
     },
     textContainer : {
         marginTop : 15,
@@ -342,5 +348,20 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         padding: 12,
         width: "100%"
+    },
+    loginLink: {
+        flexDirection: "row",
+        marginTop: 20,
+        justifyContent: "center",
+        alignItems: "center"
+    },
+    loginText: {
+        color: "white",
+        fontSize: 15
+    },
+    loginLinkText: {
+        color: "#42A5F5",
+        fontWeight: "500",
+        fontSize: 15
     }
 });
