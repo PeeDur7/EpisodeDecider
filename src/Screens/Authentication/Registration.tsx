@@ -18,6 +18,7 @@ export default function RegistrationPage(){
     const [showPassword, setShowPassword] = useState(false);
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const [emailError, setEmailError] = useState("");
     const [passwordError, setPasswordError] = useState("");
@@ -101,12 +102,16 @@ export default function RegistrationPage(){
 
     //must check if each input field is filled and matches the requirements before reigstering user through firebase
     const registerUser = async () => {
+        setLoading(true);
         setUsernameError("");
         setEmailError("");
         setPasswordError("");
         setConfirmPasswordError("");
 
-        if (!isEmailValid() || !isPasswordValid()) return;
+        if (!isEmailValid() || !isPasswordValid()){
+            setLoading(false);
+            return ;
+        } 
 
         try{
             const usernameValid = await isUsernameValid();
@@ -121,6 +126,7 @@ export default function RegistrationPage(){
                 createdAt : new Date().toISOString()
             });
             navigation.navigate("Login");
+            setLoading(false);
         } catch (error : any) {
             if (error.code === "auth/email-already-in-use") {
                 setEmailError("This email is already registered");
@@ -128,7 +134,8 @@ export default function RegistrationPage(){
                 setEmailError("Invalid email address");
             } else if (error.code === "auth/weak-password") {
                 setPasswordError("Password is too weak");
-            } 
+            }
+            setLoading(false);
         }
     };
 
@@ -139,7 +146,7 @@ export default function RegistrationPage(){
                     style={styles.backButton}
                     onPress={() => navigation.goBack()}
                 >
-                    <Ionicons name="arrow-back" size={28} color="white"/>
+                    <Ionicons name="arrow-back" size={25} color="white"/>
                 </Pressable>
                 <Text style={styles.title}>Create an Account</Text>
                 <View style={styles.textContainer}>
@@ -226,7 +233,7 @@ export default function RegistrationPage(){
                             </Pressable>
                         </View>
                     </View>
-                    <Pressable style={styles.signUpButton} onPress={registerUser}>
+                    <Pressable style={styles.signUpButton} onPress={registerUser} disabled={loading}>
                         <Text style={styles.signUpButtonText}> Sign Up</Text>
                     </Pressable>
                 </View>
@@ -243,8 +250,8 @@ const styles = StyleSheet.create({
     },
     backButton : {
         position: "absolute",
-        top: 50,
-        left: 20,
+        top: 40,
+        left: 5,
         zIndex: 10,
         padding: 10
     },

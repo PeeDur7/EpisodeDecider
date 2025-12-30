@@ -58,36 +58,38 @@ export default function ForgotPasswordPage(){
                 style={styles.backButton}
                 onPress={() => navigation.goBack()}
             >
-                <Ionicons name="arrow-back" size={28} color="white"/>
+                <Ionicons name="arrow-back" size={25} color={"white"}/>
             </Pressable>
             <Text style={styles.title}>Reset Password</Text>
             <Text style={styles.subtitle}>
-                Enter your email and we'll send you a link to reset your password
+                Enter your email and we'll send you{'\n'}a link to reset your password
             </Text>
             <View style={styles.textContainer}>
-                <Text style={{marginLeft : 3, color : "white", fontWeight : "500", marginBottom : 5}}>Email</Text>
-                <TextInput 
-                    style={emailError ? styles.errorStyle : styles.email} 
-                    onChangeText={handleEmailChange} 
-                    placeholder="Enter Email"
-                    placeholderTextColor="white"
-                    keyboardType="email-address"
-                    value={email}
-                    autoCapitalize="none"
-                />
-                {emailError ? (
-                    <Text style={styles.errorText}>{emailError}</Text>
-                ) : null}
+                <View style={{width : "100%"}}>
+                    <Text style={{marginLeft : 3, color : "white", fontWeight : "500", marginBottom : 5}}>Email</Text>
+                    <TextInput 
+                        style={emailError ? styles.errorStyle : styles.email} 
+                        onChangeText={handleEmailChange} 
+                        placeholder="Enter Email"
+                        placeholderTextColor="white"
+                        keyboardType="email-address"
+                        value={email}
+                        autoCapitalize="none"
+                    />
+                    {emailError ? (
+                        <Text style={styles.errorText}>{emailError}</Text>
+                    ) : null}
+                </View>
+                <Pressable
+                    style={styles.resetButton}
+                    onPress={passwordReset}
+                    disabled={loading}
+                >
+                    <Text style={styles.resetButtonText}>
+                        {loading ? "Sending Email" : "Send Email"}
+                    </Text>
+                </Pressable>
             </View>
-            <Pressable
-                style={styles.resetButton}
-                onPress={passwordReset}
-                disabled={loading}
-            >
-                <Text style={styles.resetButtonText}>
-                    {loading ? "Sending Email" : "Send Email"}
-                </Text>
-            </Pressable>
         </SafeAreaView>
     );
 }
@@ -100,33 +102,70 @@ const styles = StyleSheet.create({
     },
     backButton : {
         position: "absolute",
-        top: 50,
-        left: 20,
+        top: 40,
+        left: 5,
         zIndex: 10,
-        padding: 10
+        padding: 10,
     },
     title : {
-
+        fontSize : 30,
+        color : "white",
+        fontWeight : "600",
+        marginTop : 20
     }, 
     subtitle : {
-
+        fontSize : 14,
+        color : "#949494",
+        fontWeight : "500",
+        marginTop : 20,
+        textAlign: "center",
+        marginBottom: 20,
+        lineHeight: 20,
+        maxWidth: "80%"
     },
     textContainer : {
-
+        marginTop : 0,
+        alignItems : "center",
+        padding: 20,
+        width: "95%"
     },
     errorStyle : {
-
+        color : "white",  
+        fontWeight : "500",
+        borderWidth: 2,
+        borderColor: "#FF4444",  
+        borderRadius: 8,
+        padding: 12,
+        width: "100%"
     },
     email : {
-
+        color : "white",
+        fontWeight : "500",
+        borderWidth: 2,
+        borderColor: "white",
+        borderRadius: 8,
+        padding: 12,
+        width: "100%",
+        marginBottom: 10
     },
     errorText : {
-
+        color: "#FF6666",
+        fontSize: 12,
+        marginLeft: 5,
+        marginBottom: 20,
+        marginTop: 2
     },
     resetButton : {
-
+        marginTop : 15,
+        backgroundColor : "#03AC13",        
+        borderRadius : 8,
+        width: "100%",
+        alignItems: "center"
     },
     resetButtonText : {
-
+        color : "white",
+        fontWeight: "600",
+        fontSize : 15,
+        paddingVertical : 12,
     }
 });

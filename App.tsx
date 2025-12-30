@@ -42,8 +42,8 @@ export default function App() {
         ) : (
           <>
             {/* <Stack.Screen name="Welcome" component={WelcomePage} options={{ headerShown : false}}/>
-            <Stack.Screen name="Login" component={LoginPage} options={{ headerShown : false }}/>
-            <Stack.Screen name="Registration" component={RegistrationPage} options={{ headerShown: false }}/> */}
+            <Stack.Screen name="Login" component={LoginPage} options={{ headerShown : false }}/> */}
+            {/* <Stack.Screen name="Registration" component={RegistrationPage} options={{ headerShown: false }}/> */}
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordPage} options={{ headerShown : false }}/>
           </>
         )}
