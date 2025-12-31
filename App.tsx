@@ -9,6 +9,9 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth, saveUserToStorage, loadUserFromStorage } from './src/Firebase/FirebaseConfig';
 import HomePage from './src/Screens/AppScreens/Home';
 import ForgotPasswordPage from './src/Screens/Authentication/ForgotPassword';
+import SearchPage from './src/Screens/AppScreens/Search';
+import SettingPage from './src/Screens/AppScreens/Setting';
+import NavBar from './src/Components/NavBar';
 
 const Stack = createNativeStackNavigator();
 
@@ -36,7 +39,7 @@ export default function App() {
       <Stack.Navigator>
         {isLoggedIn ? (
           <>
-            <Stack.Screen name="Home" component={HomePage} options={{ headerShown : false }}/>
+            <Stack.Screen name="NavBar" component={NavBar} options={{ headerShown : false}}/>
             {/* actual pages where only logged in users can see */}
           </>
         ) : (
