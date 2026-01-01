@@ -1,19 +1,38 @@
-import { getAuth, signOut } from "@firebase/auth";
+import { signOut } from "@firebase/auth";
+import { auth } from "../Firebase/FirebaseConfig";
 import { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Pressable, StyleSheet, Text } from "react-native";
 
-export default function logoutButton(){
+export default function LogoutButton(){
     const [loading, setLoading] = useState(false);
-    const auth = getAuth();
-
+    
     const logOutUser = async () => {
         setLoading(true);
-        await signOut(auth);
+        try{
+            await signOut(auth);
+        } catch (error) {
+            console.error("error logging out ",error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return(
-        <SafeAreaView>
-
-        </SafeAreaView>
+        <Pressable 
+            style={styles.logoutButton}
+            onPress={logOutUser}
+            disabled={loading}
+        >
+            <Text style={styles.logoutButtonText}>Log out</Text>
+        </Pressable>
     );
 }
+
+const styles = StyleSheet.create({
+    logoutButton : {
+
+    },
+    logoutButtonText : {
+
+    }
+});
