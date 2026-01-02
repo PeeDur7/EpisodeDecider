@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function RegistrationPage(){
-    const [username, setUsername] = useState("");
+    const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -23,12 +23,12 @@ export default function RegistrationPage(){
     const [emailError, setEmailError] = useState("");
     const [passwordError, setPasswordError] = useState("");
     const [confirmPasswordError, setConfirmPasswordError] = useState("");
-    const [usernameError, setUsernameError] = useState("");
+    const [nameError, setNameError] = useState("");
     const navigation = useNavigation<NavigationProp>();
 
     const handleUsernameChange = (text: string) => {
-        setUsername(text);
-        setUsernameError("");
+        setName(text);
+        setNameError("");
     };
 
     const handleEmailChange = (text: string) => {
@@ -47,7 +47,7 @@ export default function RegistrationPage(){
     };
 
     const isEmailValid = () => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if(!email.trim()){
             setEmailError("Email is required");
             return false;
@@ -56,15 +56,37 @@ export default function RegistrationPage(){
             setEmailError("Email is an invalid format");
             return false;
         }
+
+        const [localPart, domain] = email.split('@');
+    
+        //extra validations for email before @
+        if (domain) {
+            const domainParts = domain.split('.');
+            
+            const tld = domainParts[domainParts.length - 1];
+            if (!/^[a-zA-Z]{2,}$/.test(tld)) {
+                setEmailError("Email domain is invalid");
+                return false;
+            }
+            
+            const domainName = domainParts[0];
+            if (/^\d/.test(domainName)) {
+                setEmailError("Email domain is invalid");
+                return false;
+            }
+            
+            if (domainParts.some((part, index) => {
+                return index > 0 && /^\d+$/.test(part);
+            })) {
+                setEmailError("Email domain is invalid");
+                return false;
+            }
+        }
         return true;
     };
 
     //only valid if password is longer than 6 characters and has atleast one capital character
     const isPasswordValid = () => {
-        if (!password) {
-            setPasswordError("Password is required");
-            return false;
-        }
         if(password.length < 6){
             setPasswordError("Password needs to be at least 6 characters");
             return false;
@@ -80,52 +102,32 @@ export default function RegistrationPage(){
         return true;
     };
 
-    //checks if username is not in database if so we can register user
-    const isUsernameValid = async (): Promise<boolean> => {
-        if (!username.trim()) {
-            setUsernameError("Username is required");
+    const isNameValid = () => {
+        if(name.trim().length === 0){
+            setNameError("Name is required");
             return false;
         }
-        try {
-            const userRef = collection(db,"users");
-            const q = query(userRef, where("usernameLowerCase","==",username.toLowerCase()));
-            const querySnapShot = await getDocs(q);
-            if(!querySnapShot.empty){
-                setUsernameError("Username is already taken");
-                return false;
-            }
-            return true;
-        } catch (error) {
-            throw error;
-        }
-    };
+        return true;
+    }
 
     //must check if each input field is filled and matches the requirements before reigstering user through firebase
     const registerUser = async () => {
-        setLoading(true);
-        setUsernameError("");
+        setNameError("");
         setEmailError("");
         setPasswordError("");
         setConfirmPasswordError("");
-
-        if (!isEmailValid() || !isPasswordValid()){
-            setLoading(false);
-            return ;
-        } 
+        setLoading(true);
 
         try{
-            const usernameValid = await isUsernameValid();
-            if(!usernameValid) return;
+            if (!isNameValid() || !isEmailValid() || !isPasswordValid()) return;
             const userCredentials = await createUserWithEmailAndPassword(auth,email,password);
             const user = userCredentials.user;
             await setDoc(doc(db,"users",user.uid), {
-                username : username,
-                usernameLowerCase : username.toLowerCase(),
-                email : email,
+                name : name,
+                email : email.toLowerCase(),
                 uid : user.uid,
                 createdAt : new Date().toISOString()
             });
-            navigation.navigate("Login");
         } catch (error : any) {
             if (error.code === "auth/email-already-in-use") {
                 setEmailError("This email is already registered");
@@ -134,7 +136,6 @@ export default function RegistrationPage(){
             } else if (error.code === "auth/weak-password") {
                 setPasswordError("Password is too weak");
             }
-            setLoading(false);
         } finally {
             setLoading(false);
         }
@@ -152,17 +153,17 @@ export default function RegistrationPage(){
                 <Text style={styles.title}>Create an Account</Text>
                 <View style={styles.textContainer}>
                     <View style={{width : "100%"}}>
-                        <Text style={{marginLeft : 3, color : "white", fontWeight : "500", marginBottom : 5}}>Username</Text>
+                        <Text style={{marginLeft : 3, color : "white", fontWeight : "500", marginBottom : 5}}>Name</Text>
                         <TextInput 
-                            style={usernameError ? styles.errorStyle : styles.username} 
+                            style={nameError ? styles.errorStyle : styles.username} 
                             onChangeText={handleUsernameChange} 
-                            placeholder="Enter Username"
+                            placeholder="Enter Name"
                             placeholderTextColor="white"
-                            value={username}
+                            value={name}
                             autoCapitalize="none"
                         />
-                        {usernameError ? (
-                            <Text style={styles.errorText}>{usernameError}</Text>
+                        {nameError ? (
+                            <Text style={styles.errorText}>{nameError}</Text>
                         ) : null}
                     </View>
                     <View style={{width : "100%"}}>
@@ -192,8 +193,9 @@ export default function RegistrationPage(){
                                 value={password}
                             />
                             {passwordError ? (
-                                <Text style={styles.errorText}>{passwordError}</Text>
+                                <Text style={styles.errorTextForPassword}>{passwordError}</Text>
                             ) : null}
+                            <Text style={styles.passwordRequirement}>Password must have at least 6 characters and have a capital character</Text>
                             <Pressable
                                 style={{ flexDirection: "row", alignItems: "center", marginTop: 8, marginLeft : 5 }}
                                 onPress={() => setShowPassword(prev => !prev)}
@@ -235,7 +237,9 @@ export default function RegistrationPage(){
                         </View>
                     </View>
                     <Pressable style={styles.signUpButton} onPress={registerUser} disabled={loading}>
-                        <Text style={styles.signUpButtonText}> Sign Up</Text>
+                        <Text style={styles.signUpButtonText}>
+                            {loading ? "Signing up... please wait" : "Sign Up"}
+                        </Text>
                     </Pressable>
                     <View style={styles.loginLink}>
                         <Text style={styles.loginText}>Already have an account? </Text>
@@ -340,6 +344,13 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         marginTop: 2
     },
+    errorTextForPassword : {
+        color: "#FF6666",
+        fontSize: 12,
+        marginLeft: 5,
+        marginBottom: 5,
+        marginTop: 2
+    },
     errorStyle : {
         color : "white",  
         fontWeight : "500",
@@ -363,5 +374,13 @@ const styles = StyleSheet.create({
         color: "#42A5F5",
         fontWeight: "500",
         fontSize: 15
+    },
+    passwordRequirement : {
+        fontSize : 11,
+        color : "#cdcfcf",
+        fontWeight : "500",
+        lineHeight: 20,
+        fontStyle : "italic",
+        marginLeft : 5,
     }
 });

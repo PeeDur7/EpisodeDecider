@@ -33,6 +33,7 @@ export default function LoginPage(){
     const loginUser = async () => {
         setEmailError("");
         setPasswordError("");
+        setLoading(true);
 
         if(!email.trim()){
             setEmailError("Email is required");
@@ -42,8 +43,6 @@ export default function LoginPage(){
             setPasswordError("Password is required");
             return;
         }
-
-        setLoading(true);
 
         try{
             const userCredentials = await signInWithEmailAndPassword(auth, email,password);
