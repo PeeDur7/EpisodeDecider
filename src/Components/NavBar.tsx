@@ -10,6 +10,7 @@ export default function NavBar(){
     return(
         <tab.Navigator
             screenOptions={{
+                headerShown : false,
                 tabBarStyle: {
                     backgroundColor: '#2C2C2E', 
                     borderTopColor: '#1C1C1E', 
