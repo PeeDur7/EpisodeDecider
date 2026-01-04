@@ -2,15 +2,16 @@ import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import LogoutButton from "../../Components/LogoutButton";
-import { db, loadUserFromStorage } from "../../Firebase/FirebaseConfig";
+import { auth, db, } from "../../Firebase/FirebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import { ScrollView } from "react-native-gesture-handler";
 
 export default function SettingPage(){
     const [name, setName] = useState("");
-    const [userId, setUserId] = useState("");
+    const [email, setEmail] = useState("");
     const [preferredStreamingServices, setPreferredStreamingServices] = useState<Set<string>>(new Set());
+    const [loading, setLoading] = useState(true);
 
     //all of the streaming services this app will create deep links for 
     const streamingServices = [
@@ -24,14 +25,14 @@ export default function SettingPage(){
     ];
 
     const addService = async (service : string) => {
-        setPreferredStreamingServices(prev => 
-            new Set(prev).add(service)
-        );
+        const newSet = new Set(preferredStreamingServices).add(service);
+        setPreferredStreamingServices(newSet);
+        const user = auth.currentUser;
 
-        if(userId){
+        if(user && user.uid){
             try{
-                await updateDoc(doc(db,"users",userId), {
-                    preferredStreamingServices : Array.from(preferredStreamingServices)
+                await updateDoc(doc(db,"users",user.uid), {
+                    preferredStreamingServices : Array.from(newSet)
                 });
             } catch(error) {
                 throw error;
@@ -43,10 +44,11 @@ export default function SettingPage(){
         const newSet = new Set(preferredStreamingServices);
         newSet.delete(service);
         setPreferredStreamingServices(newSet);
+        const user = auth.currentUser;
         
-        if(userId){
+        if(user && user.uid){
             try{
-                await updateDoc(doc(db, "users", userId), {
+                await updateDoc(doc(db, "users", user.uid), {
                     preferredStreamingServices : Array.from(newSet)
                 })
             }catch(error){
@@ -57,25 +59,35 @@ export default function SettingPage(){
 
     //try to get the user's name
     useEffect(() => {
-        loadUserFromStorage().then(async user => {
-            if(user && user.uid){
-                setUserId(user.uid);
-                const userDoc = await getDoc(doc(db,"users",user.uid));
+        const user = auth.currentUser;
+        if(user && user.uid){
+            getDoc(doc(db,"users",user.uid)).then(userDoc => {
                 if(userDoc.exists()){
                     setName(userDoc.data().name);
-                    if(userDoc.data().preferedStreamingService){
-                        setPreferredStreamingServices(new Set(userDoc.data().preferredStreamingService));
+                    setEmail(userDoc.data().email);
+                    if(userDoc.data().preferredStreamingServices){
+                        setPreferredStreamingServices(new Set(userDoc.data().preferredStreamingServices));
                     }
+                    setLoading(false);
                 }
-            }
-        })
+            })
+        }
     },[]);
+
+    if(loading === true){
+        return(
+            <SafeAreaView style={styles.container}/>
+        );
+    }
 
     return(
         <ScrollView style={{ backgroundColor : "#3A3A3C", flex : 1 }} bounces={false} showsVerticalScrollIndicator={false}>
             <SafeAreaView style={styles.container} >
                 <Text style={styles.title}>Settings</Text>
                 <View style={styles.settingsContainer}>
+                    <Text style={styles.accountInfoSubHeading}>Account Information</Text>
+                    <Text style={{ color : "white", textAlign : "left", fontSize : 15, width : "100%", marginLeft : 10, marginTop : 10 }}>{name}</Text>
+                    <Text style={{ color : "white", textAlign : "left", fontSize : 15, width : "100%", marginLeft : 10 }}>{email}</Text>
                     <Text style={styles.preferredStreamingServicesSubHeading}>Preferred Streaming Services</Text>
                     {preferredStreamingServices.size === 0 && (
                         <Text style={styles.noStreamingService}>No streaming services selected</Text>
@@ -141,7 +153,17 @@ const styles = StyleSheet.create({
         padding: 15,
         width: "95%"
     },
+    accountInfoSubHeading : {
+        fontSize : 20,
+        color : "white",
+        fontWeight : "500",
+        textAlign : "left",
+        width : "100%",
+        textDecorationLine : "underline",
+        textDecorationColor : "#cdcfcf",
+    },
     preferredStreamingServicesSubHeading : {
+        marginTop : 40,
         fontSize : 20,
         color : "white",
         fontWeight : "500",

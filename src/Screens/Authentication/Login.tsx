@@ -37,10 +37,12 @@ export default function LoginPage(){
 
         if(!email.trim()){
             setEmailError("Email is required");
+            setLoading(false);
             return;
         }
         if(!password){
             setPasswordError("Password is required");
+            setLoading(false);
             return;
         }
 

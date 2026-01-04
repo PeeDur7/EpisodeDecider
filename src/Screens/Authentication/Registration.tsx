@@ -120,7 +120,10 @@ export default function RegistrationPage(){
         setLoading(true);
 
         try{
-            if (!isNameValid() || !isEmailValid() || !isPasswordValid()) return;
+            if (!isNameValid() || !isEmailValid() || !isPasswordValid()){
+                setLoading(false);
+                return;
+            }
             const userCredentials = await createUserWithEmailAndPassword(auth,email,password);
             const user = userCredentials.user;
             await setDoc(doc(db,"users",user.uid), {
