@@ -142,7 +142,10 @@ export default function LoginPage(){
                 </View>
                 <Pressable
                     onPress={loginUser}
-                    style={styles.loginButton}
+                    style={({pressed}) =>[
+                        styles.loginButton,
+                        pressed && { opacity : 0.6 }
+                    ]}
                 >
                     <Text style={styles.loginButtonText}>Login</Text>
                 </Pressable>

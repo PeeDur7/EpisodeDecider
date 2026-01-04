@@ -17,13 +17,19 @@ export default function WelcomePage(){
                     Removes decision fatigue by randomly selecting an episode within your chosen season range and launching it directly on your streaming service</Text>
                 <Pressable
                     onPress={() => navigation.navigate("Registration")}
-                    style={styles.getStarted}
+                    style={({pressed}) => [
+                        styles.getStarted,
+                        pressed && { opacity : 0.6}
+                    ]}
                 >
                     <Text style={styles.getStartedText}>Let's get started</Text>
                 </Pressable>
                 <Pressable
                     onPress={() => navigation.navigate("Login")}
-                    style={styles.alreadyHaveAnAccount}
+                    style={({pressed}) => [
+                        styles.alreadyHaveAnAccount,
+                        pressed && { opacity : 0.6}
+                    ]}
                 >
                     <Text style={styles.alreadyHaveAnAccountText}>I already have an account</Text>
                 </Pressable>

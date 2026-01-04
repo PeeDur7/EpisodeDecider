@@ -33,6 +33,12 @@ export default function App() {
     return unsubscribe;
   },[]);
 
+  if(isLoggedIn === null){
+    return(
+      <GestureHandlerRootView style={{ flex : 1, backgroundColor: "#3A3A3C" }}/>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={{flex : 1}}>
       <NavigationContainer>

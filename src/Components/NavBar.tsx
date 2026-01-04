@@ -3,6 +3,7 @@ import HomePage from "../Screens/AppScreens/Home";
 import SearchPage from "../Screens/AppScreens/Search";
 import SettingPage from "../Screens/AppScreens/Setting";
 import { Ionicons } from "@expo/vector-icons";
+import { opacity } from "react-native-reanimated/lib/typescript/Colors";
 
 const tab = createBottomTabNavigator();
 

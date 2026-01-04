@@ -82,7 +82,10 @@ export default function ForgotPasswordPage(){
                     ) : null}
                 </View>
                 <Pressable
-                    style={styles.resetButton}
+                    style={({pressed}) => [
+                        styles.resetButton,
+                        pressed && { opacity : 0.6 }
+                    ]}
                     onPress={passwordReset}
                     disabled={loading}
                 >

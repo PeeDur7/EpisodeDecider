@@ -9,6 +9,7 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, query, collection, where, getDocs } from "firebase/firestore";
 import { db, auth } from "../../Firebase/FirebaseConfig";
 import { Ionicons } from '@expo/vector-icons';
+import { opacity } from "react-native-reanimated/lib/typescript/Colors";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function RegistrationPage(){
@@ -236,7 +237,14 @@ export default function RegistrationPage(){
                             </Pressable>
                         </View>
                     </View>
-                    <Pressable style={styles.signUpButton} onPress={registerUser} disabled={loading}>
+                    <Pressable 
+                        style={({pressed}) => [
+                            styles.signUpButton,
+                            pressed && { opacity : 0.6}
+                        ]} 
+                        onPress={registerUser} 
+                        disabled={loading}
+                    >
                         <Text style={styles.signUpButtonText}>
                             {loading ? "Signing up... please wait" : "Sign Up"}
                         </Text>
