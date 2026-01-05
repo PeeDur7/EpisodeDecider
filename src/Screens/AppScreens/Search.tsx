@@ -31,7 +31,7 @@ interface recentlyWatchedEpisodes {
 export default function SearchPage(){
     const [recentlyWatchedEP, setRecentlyWatchedEP] = useState<recentlyWatchedEpisodes[]>([]);
     const [searchText, setSearchText] = useState("");
-    const [searchedShows, setSearchedShows] = useState<ShowResult[]>([]); //return top 3 shows that the api finds using searchText
+    const [searchedShows, setSearchedShows] = useState<ShowResult[]>([]); //return top 5 shows that the api finds using searchText
     //these 2 variables are for pagination of the recently watched shows
     const [startIndex, setStartIndex] = useState(0);
     const [endIndex, setEndIndex] = useState(5);
@@ -59,7 +59,7 @@ export default function SearchPage(){
             } else {
                 setSearchedShows([]);
             }
-        }, 500); // Wait 500ms after user stops typing
+        }, 500);
     
         return () => clearTimeout(delaySearch);
     }, [searchText]);
@@ -168,7 +168,11 @@ export default function SearchPage(){
                                     onPress={() => navigation.navigate("ShowInfo",{
                                         showId : show.id
                                     })}
-                                    style={styles.searchDropdownButton}
+                                    style={({pressed}) => [
+                                        styles.searchDropdownButton,
+                                        pressed && { backgroundColor: '#3E3E40' },
+                                        index === searchedShows.length - 1 && { borderBottomWidth: 0 }
+                                    ]}
                                 >
                                     {show.posterImage ? (
                                         <Image 
@@ -238,22 +242,12 @@ const styles = StyleSheet.create({
     searchContainer : {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#1C1C1E",
+        backgroundColor: "#2C2C2E",
         borderRadius: 8,
         paddingHorizontal: 12,
         paddingVertical: 8,
-        marginHorizontal: 16,
         marginTop: 10,
         width : "92%"
-    },
-    searchText : {
-        color: "white",
-        fontSize: 16,
-    },
-    searchAirDate : {
-        color : "#8E8E93",
-        fontSize : 14,
-        fontStyle : "italic"
     },
     showTitle : {
 
@@ -297,30 +291,51 @@ const styles = StyleSheet.create({
         textDecorationLine : "underline",
         textDecorationColor : "#cdcfcf"
     },
-    searchDropdownShowsContainer : {
-        width: "92%",
-        backgroundColor: '#1C1C1E',
-        borderRadius: 8,
-        marginTop: 10,
-        padding: 10,
-    },
-    searchDropdownButton : {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 10,
-        borderBottomWidth: 3,
-        borderBottomColor: '#3A3A3C',
-        width : "95%"
-    }, 
+
     searchDropdownText : {
         color: 'white',
         fontSize: 16,
         flex: 1,
     },
+    searchText : {
+        color: "white",
+        fontSize: 16,
+        flex: 1, 
+    },
+    
+    searchDropdownShowsContainer : {
+        width: "92%",
+        backgroundColor: '#2C2C2E',
+        borderRadius: 10,
+        marginTop: 5, 
+        padding: 10,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 6,
+        elevation: 5,
+    },
+    
+    searchDropdownButton : {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12, 
+        borderBottomWidth: 1, 
+        borderBottomColor: '#2C2C2E', 
+        borderRadius: 6, 
+    },
+    
+    searchAirDate : {
+        color : "#8E8E93",
+        fontSize : 13, 
+        fontStyle : "italic",
+        marginLeft: 8, 
+    },
+    
     poster : {
-        width: 40,    
-        height: 60,     
-        borderRadius: 4,
-        marginRight: 10,
-    }
+        width: 50,    
+        height: 75,      
+        borderRadius: 6, 
+        marginRight: 12,
+    },
 });

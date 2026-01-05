@@ -76,6 +76,7 @@ export default function ForgotPasswordPage(){
                         keyboardType="email-address"
                         value={email}
                         autoCapitalize="none"
+                        onSubmitEditing={passwordReset}
                     />
                     {emailError ? (
                         <Text style={styles.errorText}>{emailError}</Text>

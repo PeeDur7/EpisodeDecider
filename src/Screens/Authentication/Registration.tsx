@@ -223,6 +223,7 @@ export default function RegistrationPage(){
                                 placeholderTextColor="white"
                                 secureTextEntry={!showConfirmPassword}
                                 value={confirmPassword}
+                                onSubmitEditing={registerUser}
                             />
                             {confirmPasswordError ? (
                                 <Text style={styles.errorText}>{confirmPasswordError}</Text>

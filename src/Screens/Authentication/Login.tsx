@@ -113,6 +113,7 @@ export default function LoginPage(){
                             placeholderTextColor="white"
                             secureTextEntry={!showPassword}
                             value={password}
+                            onSubmitEditing={loginUser}
                         />
                         {passwordError ? (
                             <Text style={styles.errorText}>{passwordError}</Text>
