@@ -9,10 +9,15 @@ import { RootStackParamList } from "../../Navigation/types";
 import { useNavigation } from "@react-navigation/native";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+interface userWatchedShows {
+    id : number,
+    showTitle : string;
+}
+
 export default function HomePage(){
     const [tempName, setTempName] = useState("");
     const [name, setName] = useState("");
-    const [recentlyWatchedShows, setRecentlyWatchedShows] = useState<Set<string>>(new Set());
+    const [recentlyWatchedShows, setRecentlyWatchedShows] = useState<Set<userWatchedShows>>(new Set());
     const [loading, setLoading] = useState(true);
     const navigation = useNavigation<NavigationProp>();
 
@@ -23,7 +28,8 @@ export default function HomePage(){
             getDoc(doc(db,"users",user.uid)).then(userDoc => {
                 if(userDoc.exists()){
                     setTempName(userDoc.data().name);
-                    if(userDoc.data().recentlyWatched){
+                    if(userDoc.data().recentlyWatchedShows){
+                        //may need to change recentlyWatchedShows once i implement this feature
                         setRecentlyWatchedShows(new Set(userDoc.data().recentlyWatchedShows));
                     }
                 }
@@ -56,13 +62,11 @@ export default function HomePage(){
                     {
                         Array.from(recentlyWatchedShows).map((show,index) => (
                             <>
-                                {/* the show title will be here, 
-                                    don't know how to access it yet so for now show is place holder */}
-                                <Text style={styles.showTitle}>{show}</Text> 
+                                <Text style={styles.showTitle}>{show.showTitle}</Text> 
                                 <Pressable
                                     key={index}
                                     //dont know what show title is yet
-                                    onPress={() => navigation.navigate("ShowInfo", {showTitle : show})}
+                                    onPress={() => navigation.navigate("ShowInfo", {showId : show.id})}
                                     style={styles.showPoster}
                                 >
                                     {/* image of the poster will go here */}
