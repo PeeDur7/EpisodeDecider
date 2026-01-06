@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, db } from "../../Firebase/FirebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
 import { Text } from "react-native";
@@ -31,12 +31,16 @@ interface recentlyWatchedEpisodes {
 export default function SearchPage(){
     const [recentlyWatchedEP, setRecentlyWatchedEP] = useState<recentlyWatchedEpisodes[]>([]);
     const [searchText, setSearchText] = useState("");
-    const [searchedShows, setSearchedShows] = useState<ShowResult[]>([]); //return top 5 shows that the api finds using searchText
-    //these 2 variables are for pagination of the recently watched shows
-    const [startIndex, setStartIndex] = useState(0);
-    const [endIndex, setEndIndex] = useState(5);
+    const [searchedShows, setSearchedShows] = useState<ShowResult[]>([]); 
+    //pagination
+    const [endIndexForSearch, setEndIndexForSearch] = useState(5); 
+    const [endIndexForRecent, setEndIndexForRecent] = useState(5); //this is for recentlyWatchedEP
 
     const [loading, setLoading] = useState(true);
+    const [totalResults, setTotalResults] = useState(0);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [hasSearched, setHasSearched] = useState(false);
+    const scrollViewRef = useRef<ScrollView>(null);
     const navigation = useNavigation<NavigationProp>();
 
     useEffect(() => {
@@ -58,6 +62,7 @@ export default function SearchPage(){
                 performSearch(searchText);
             } else {
                 setSearchedShows([]);
+                setHasSearched(false);
             }
         }, 500);
     
@@ -65,20 +70,23 @@ export default function SearchPage(){
     }, [searchText]);
 
     const performSearch = async(text : string) => {
+        setEndIndexForSearch(5);
         if(text.trim() === "") {
+            setTotalResults(0);
             setSearchedShows([]);
             return;
         }
+
+        setSearchLoading(true);
 
         try{
             const tmdbSearchAPI = await fetch(`https://api.themoviedb.org/3/search/tv?api_key=${Constants.expoConfig?.extra?.tmdbApiKey}&query=${encodeURIComponent(text)}`);
             const tmdbData = await tmdbSearchAPI.json();
             if(tmdbData.total_results > 0){
+                setTotalResults(tmdbData.results.length);
                 const sortedList = tmdbData.results.sort((a : ShowResult,b : ShowResult) => b.popularity - a.popularity);
-                const listLength = Math.min(5, sortedList.length);
-                const topThree = sortedList.slice(0,listLength);
-                const topThreeWithPosters = await Promise.all(
-                    topThree.map(async (show : ShowResult) => {
+                const sortedListWithPosters = await Promise.all(
+                    sortedList.map(async (show : ShowResult) => {
                         try{
                             const tvmazeAPI = await fetch(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(show.name)}`);
                             const tvmazeData = await tvmazeAPI.json();
@@ -102,27 +110,47 @@ export default function SearchPage(){
                         }
                     })
                 )
-                setSearchedShows(topThreeWithPosters);
+                setSearchedShows(sortedListWithPosters);
             } else {
                 setSearchedShows([]);
             }
+            setHasSearched(true);
         }catch(error){
             setSearchedShows([]);
+            setHasSearched(false);
+        } finally{
+            setSearchLoading(false);
         }
     };
 
     const changeSearchText = (text : string) => {
         setSearchText(text);
+        if(text.length === 0){
+            setTotalResults(0);
+            setSearchedShows([]);
+            setSearchLoading(false);
+        }
+        setHasSearched(false);
     };
 
-    const pagination = () => {
-        if(endIndex + 5 > recentlyWatchedEP.length){
-            setStartIndex(endIndex);
-            setEndIndex(recentlyWatchedEP.length);
+    const paginationForSearch = () => {
+        if(endIndexForSearch + 5 > searchedShows.length){
+            setEndIndexForSearch(searchedShows.length);
         } else {
-            setStartIndex(prev => prev + 5);
-            setEndIndex(prev => prev + 5);
+            setEndIndexForSearch(prev => prev + 5);
         } 
+    };
+
+    const paginationForRecent = () => {
+        if(endIndexForRecent + 5 > recentlyWatchedEP.length){
+            setEndIndexForRecent(recentlyWatchedEP.length);
+        } else {
+            setEndIndexForRecent(prev => prev + 5);
+        } 
+    };
+
+    const scrollToTop = () => {
+        scrollViewRef.current?.scrollTo({ y: 0, animated: true });
     };
 
     if(loading === true){
@@ -136,13 +164,7 @@ export default function SearchPage(){
             <SafeAreaView style={styles.container}>
                 <View style={styles.searchPageContainer}>
                     <View style={styles.searchContainer}>
-                        <Pressable
-                            onPress={() => navigation.navigate("ShowList",{
-                                showTitle : searchText
-                            })}
-                        >
-                            <Ionicons name="search-outline" size={15} color="white" style={{marginRight : 8}}/>
-                        </Pressable>
+                        <Ionicons name="search-outline" size={15} color="white" style={{marginRight : 8}}/>
                         <TextInput
                             placeholder="Search your favorite shows"
                             placeholderTextColor={"white"}
@@ -151,22 +173,35 @@ export default function SearchPage(){
                             autoCapitalize="none"
                             style={styles.searchText}
                             returnKeyType="done"
-                            onSubmitEditing={() => {
-                                if(searchText.trim() !== "") {
-                                    navigation.navigate("ShowList", {
-                                        showTitle: searchText
-                                    });
-                                }
-                            }}
                         />
+                        <Pressable
+                            onPress={() => changeSearchText("")}
+                            style={({pressed}) => [
+                                pressed && { opacity : 0.6 },
+                                styles.clearSearchBox
+                            ]}
+                        >
+                            <Text style={styles.clearSearchText}>Clear</Text>
+                        </Pressable>
                     </View>
-                    {searchedShows.length > 0 && (
+                    {searchLoading && (
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="small" color="#03AC13" />
+                            <Text style={styles.loadingText}>Searching...</Text>
+                        </View>
+                    )}
+                    {searchText.trim() !== "" && searchedShows.length === 0 && !searchLoading && hasSearched && (
+                        <Text style={styles.noResultsText}>No results</Text>
+                    )}
+                    {searchedShows.length > 0 && searchText.trim() !== "" && (
                         <View style={styles.searchDropdownShowsContainer}>
-                            {Array.from(searchedShows).map((show,index) => (
+                        <Text style={styles.resultsNumTitle}>{totalResults} results found</Text>
+                            {Array.from(searchedShows).slice(0,endIndexForSearch).map((show,index) => (
                                 <Pressable
-                                    key={show.id}
+                                    key={index}
                                     onPress={() => navigation.navigate("ShowInfo",{
-                                        showId : show.id
+                                        showId : show.id,
+                                        showPoster : show.posterImage
                                     })}
                                     style={({pressed}) => [
                                         styles.searchDropdownButton,
@@ -188,6 +223,18 @@ export default function SearchPage(){
                             ))}
                         </View>
                     )}
+
+                    {endIndexForSearch < totalResults && !searchLoading &&(
+                        <Pressable
+                            onPress={paginationForSearch}
+                            style={({pressed}) => [
+                                styles.loadMore,
+                                pressed && { opacity : 0.6}
+                            ]}
+                        >
+                            <Text style={styles.loadMoreText}>Load more</Text>
+                        </Pressable>
+                    )}
                     
                     <View style={styles.recentlyWatchedEpisodesContainer}>
                         <Text style={styles.recentlyWatchedEpisodesSubHeading}>Recently Watched Episodes</Text>
@@ -196,9 +243,8 @@ export default function SearchPage(){
                         )}
                         {recentlyWatchedEP.length > 0 && (
                             Array.from(recentlyWatchedEP)
-                            .slice(startIndex,endIndex)
+                            .slice(0,endIndexForRecent)
                             .map((episode, index) => (
-                                //may need to change some of these data points since i havent implemented them yet
                                 <Pressable
                                     key={index}
                                     style={styles.recentlyWatchedEpisodes}
@@ -214,10 +260,13 @@ export default function SearchPage(){
                             ))
                         )}
                     </View>
-                    { endIndex < recentlyWatchedEP.length && (
+                    { endIndexForRecent < recentlyWatchedEP.length && (
                         <Pressable
-                            onPress={pagination}
-                            style={styles.loadMore}
+                            onPress={paginationForRecent}
+                            style={({pressed}) => [
+                                styles.loadMore,
+                                pressed && { opacity : 0.6}
+                            ]}
                         >
                             <Text style={styles.loadMoreText}>Load more</Text>
                         </Pressable>
@@ -265,7 +314,7 @@ const styles = StyleSheet.create({
         marginTop : 15,
         backgroundColor : "#03AC13",        
         borderRadius : 8,
-        width: "100%",
+        width: "92%",
         alignItems: "center"
     },
     loadMoreText : {
@@ -337,5 +386,40 @@ const styles = StyleSheet.create({
         height: 75,      
         borderRadius: 6, 
         marginRight: 12,
+    },
+    resultsNumTitle : {
+        textAlign : "left",
+        color: "#8E8E93",
+        fontSize: 16,
+        fontStyle: "italic",
+        marginTop: 5,
+        marginBottom : 5,
+        width: "100%",
+        marginLeft : 10
+    },
+    noResultsText : {
+        textAlign : "center",
+        color: "#8E8E93",
+        fontSize: 16,
+        fontStyle: "italic",
+        marginTop: 5,
+        width: "100%",
+    },
+    clearSearchBox : {
+        alignItems : "center",
+    },
+    clearSearchText : {
+        color : "white"
+    },
+    loadingContainer: {
+        padding: 15,
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 10,
+    },
+    loadingText: {
+        color: '#8E8E93',
+        fontSize: 14,
     },
 });

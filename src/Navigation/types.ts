@@ -6,8 +6,10 @@ export type RootStackParamList = {
     ForgotPassword : undefined;
     Search : undefined;
     Settings : undefined;
-    ShowList : {showTitle : string};
-    ShowInfo : {showId : number};
+    ShowInfo : {
+      showId : number;
+      showPoster? : string;
+    };
     ShowRedirect : {
       showTitle : string;
       episodeNum : string;

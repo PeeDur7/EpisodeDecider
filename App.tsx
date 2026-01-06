@@ -12,6 +12,7 @@ import ForgotPasswordPage from './src/Screens/Authentication/ForgotPassword';
 import SearchPage from './src/Screens/AppScreens/Search';
 import SettingPage from './src/Screens/AppScreens/Setting';
 import NavBar from './src/Components/NavBar';
+import ShowInfo from './src/Screens/AppScreens/ShowInfo';
 
 const Stack = createNativeStackNavigator();
 
@@ -46,7 +47,7 @@ export default function App() {
         {isLoggedIn ? (
           <>
             <Stack.Screen name="NavBar" component={NavBar} options={{ headerShown : false}}/>
-            {/* actual pages where only logged in users can see */}
+            <Stack.Screen name="ShowInfo" component={ShowInfo} options={{ headerShown : false }}/>
           </>
         ) : (
           <>
