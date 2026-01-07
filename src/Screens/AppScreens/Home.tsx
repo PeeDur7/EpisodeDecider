@@ -12,7 +12,8 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 interface userWatchedShows {
     id : number,
     showTitle : string;
-    poster? : string
+    poster? : string;
+    firstAirDate : string;
 }
 
 export default function HomePage(){
@@ -67,7 +68,12 @@ export default function HomePage(){
                                 <Pressable
                                     key={index}
                                     //dont know what show title is yet
-                                    onPress={() => navigation.navigate("ShowInfo", {showId : show.id,showPoster : show.poster})}
+                                    onPress={() => navigation.navigate("ShowInfo", {
+                                        showId : show.id,
+                                        showPoster : show.poster, 
+                                        showTitle : show.showTitle,
+                                        firstAirDate : show.firstAirDate
+                                    })}
                                     style={styles.showPoster}
                                 >
                                     {/* image of the poster will go here */}
@@ -109,7 +115,7 @@ const styles = StyleSheet.create({
         textDecorationColor : "#cdcfcf"
     },
     noShowsWatchedText : {
-        color: "#8E8E93",
+        color: "#AEAEB2",
         fontSize: 14,
         fontStyle: "italic",
         marginTop: 5,

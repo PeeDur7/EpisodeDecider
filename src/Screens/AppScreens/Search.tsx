@@ -201,7 +201,9 @@ export default function SearchPage(){
                                     key={index}
                                     onPress={() => navigation.navigate("ShowInfo",{
                                         showId : show.id,
-                                        showPoster : show.posterImage
+                                        showPoster : show.posterImage,
+                                        showTitle : show.name,
+                                        firstAirDate : show.first_air_date.slice(0,4)
                                     })}
                                     style={({pressed}) => [
                                         styles.searchDropdownButton,
@@ -324,7 +326,7 @@ const styles = StyleSheet.create({
         paddingVertical : 12,
     },
     noRecentWatchedEPText : {
-        color: "#8E8E93",
+        color: "#AEAEB2",
         fontSize: 14,
         fontStyle: "italic",
         marginTop: 5,
@@ -375,7 +377,7 @@ const styles = StyleSheet.create({
     },
     
     searchAirDate : {
-        color : "#8E8E93",
+        color : "#AEAEB2",
         fontSize : 13, 
         fontStyle : "italic",
         marginLeft: 8, 
@@ -389,7 +391,7 @@ const styles = StyleSheet.create({
     },
     resultsNumTitle : {
         textAlign : "left",
-        color: "#8E8E93",
+        color: "#AEAEB2",
         fontSize: 16,
         fontStyle: "italic",
         marginTop: 5,
@@ -399,7 +401,7 @@ const styles = StyleSheet.create({
     },
     noResultsText : {
         textAlign : "center",
-        color: "#8E8E93",
+        color: "#AEAEB2",
         fontSize: 16,
         fontStyle: "italic",
         marginTop: 5,
@@ -419,7 +421,7 @@ const styles = StyleSheet.create({
         gap: 10,
     },
     loadingText: {
-        color: '#8E8E93',
+        color: '#AEAEB2',
         fontSize: 14,
     },
 });

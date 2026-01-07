@@ -9,6 +9,8 @@ export type RootStackParamList = {
     ShowInfo : {
       showId : number;
       showPoster? : string;
+      showTitle : string;
+      firstAirDate : string;
     };
     ShowRedirect : {
       showTitle : string;
