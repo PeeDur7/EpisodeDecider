@@ -16,7 +16,6 @@ export default function DropdownBar({
     const [dropDownEnable, setDropDownEnable] = useState(false);
     const [currentSelection, setCurrentSelection] = useState(initialText);
 
-    // Filter out the currently selected item
     const availableOptions = Array.from(contents).filter(
         item => item !== currentSelection
     );

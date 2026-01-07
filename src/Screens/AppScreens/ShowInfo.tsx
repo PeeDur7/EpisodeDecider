@@ -42,8 +42,12 @@ export default function ShowInfo() {
     const changeCustomSeasonRange = (text : string) => {
         if(text.trim().toLowerCase() === "custom"){
             setCustomSeasonRange(true);
+            setStartSeasonRange(1);
+            setEndSeasonRange(totalSeasons);
         } else {
             setCustomSeasonRange(false);
+            setStartSeasonRange(0);
+            setEndSeasonRange(0);
         }
     }  
 
@@ -171,7 +175,35 @@ export default function ShowInfo() {
                 {customSeasonRange && (
                     <View style={styles.customSeasonContainer}>
                         <Text style={styles.customSeasonStartText}>Season start range</Text>
+                        <DropdownBar
+                            contents={new Set(
+                                Array.from(seasonsMap.keys()).filter(season => {
+                                    const seasonNum = parseInt(season.replace(/\D/g, ''));
+                                    const currentEndRange = endSeasonRange === 0 ? totalSeasons : endSeasonRange;
+                                    return seasonNum < currentEndRange;
+                                })
+                            )}
+                            initialText="Season 1"
+                            onSelectionChange={(value) => {
+                                const seasonNum = parseInt(value.replace(/\D/g, ''));
+                                setStartSeasonRange(seasonNum);
+                            }}
+                        />
                         <Text style={styles.customSeasonsEndText}>Season end range</Text>
+                        <DropdownBar
+                            contents={new Set(
+                                Array.from(seasonsMap.keys()).filter(season => {
+                                    const seasonNum = parseInt(season.replace(/\D/g, ''));
+                                    const currentStartRange = startSeasonRange === 0 ? 1 : startSeasonRange;
+                                    return seasonNum > currentStartRange;
+                                })
+                            )}
+                            initialText={`Season ${totalSeasons}`}
+                            onSelectionChange={(value) => {
+                                const seasonNum = parseInt(value.replace(/\D/g, ''));
+                                setEndSeasonRange(seasonNum);
+                            }}
+                        />
                     </View>
                 )}
                 <Pressable
@@ -303,14 +335,28 @@ const styles = StyleSheet.create({
         marginTop : 20,
         marginBottom : 5
     },
-    customSeasonContainer : {
-
+    customSeasonContainer: {
+        width: "100%",
+        alignItems: "center",
+        marginTop: 15,
     },
-    customSeasonStartText : {
-
+    customSeasonStartText: {
+        color: "white",
+        fontSize: 15,
+        textAlign: "left",
+        width: "90%",
+        fontWeight: "500",
+        marginTop: 10,
+        marginBottom: 5,
     },
-    customSeasonsEndText : {
-
+    customSeasonsEndText: {
+        color: "white",
+        fontSize: 15,
+        textAlign: "left",
+        width: "90%",
+        fontWeight: "500",
+        marginTop: 15,
+        marginBottom: 5,
     },
     runTimeLimitText : {
         color : "white",
