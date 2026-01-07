@@ -1,17 +1,21 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { RootStackParamList } from "../../Navigation/types";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useEffect, useState } from "react";
 import Constants from "expo-constants";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { ScrollView } from "react-native-gesture-handler";
+import DropdownBar from "../../Components/DropdownBar";
+import Checkbox from "expo-checkbox";
 type ShowInfoRouteProp = RouteProp<RootStackParamList, 'ShowInfo'>;
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function ShowInfo() {
     const [loading, setLoading] = useState(false);
+    const [submitLoading, setSubmitLoading] = useState(false);
+    const [dropDownText, setDropDownText] = useState<string []>([]);
     const [totalSeasons, setTotalSeason] = useState(0);
     //just in case user wants episodes that are shorter than a specifc amount of time
     const [runTime, setRunTime] = useState(false);
@@ -27,6 +31,7 @@ export default function ShowInfo() {
 
     const [showDescription, setShowDescription] = useState("");
     const [genres, setGenres] = useState<string[]>([]);
+    const [seasonsMap, setSeasonsMap] = useState<Map<string,number>>(new Map());
     const route = useRoute<ShowInfoRouteProp>();
     const showTitle = route.params.showTitle; //get the showTitle parameter from previous pages
     const showId = route.params.showId;
@@ -34,14 +39,58 @@ export default function ShowInfo() {
     const firstAirDate = route.params.firstAirDate;
     const navigation = useNavigation<NavigationProp>();
 
+    const changeCustomSeasonRange = (text : string) => {
+        if(text.trim().toLowerCase() === "custom"){
+            setCustomSeasonRange(true);
+        } else {
+            setCustomSeasonRange(false);
+        }
+    }  
+
+    const changeRunTime = () => {
+        if(runTime){
+            setRunTimeLimit(0);
+        }
+        setRunTime(prev => !prev);
+    }
+
+    const changeRunTimeLimit = (text : string) => {
+        const numericValue = text.replace(/[^0-9]/g, '');
+        setRunTimeLimit(numericValue === "" ? 0 : +numericValue);
+    }
+
+    //finds a random episode based on criteria user wants, then sends it to the other page
+    const randomizeEpisode = async () => {
+        setSubmitLoading(true);
+        try{
+
+        }catch(error){
+            console.log(error);
+        }finally{
+            setSubmitLoading(false);
+        }
+    }
+
     const performSearch = async () => {
         setLoading(true);
 
         try{
             const tmdbSearchAPI = await fetch(`https://api.themoviedb.org/3/tv/${showId}?api_key=${Constants.expoConfig?.extra?.tmdbApiKey}`);
             const tmdbSearchData = await tmdbSearchAPI.json();
-            if(tmdbSearchData.number_of_seasons > 0){
-                setTotalSeason(tmdbSearchData.number_of_seasons);
+            if(tmdbSearchData.seasons.length > 0){
+                const dropDown = ["All", "Custom"];
+                const tempMap = new Map<string,number>();
+                let seasonCount = 0;
+                for(let index = 0; index < tmdbSearchData.seasons.length; index++){
+                    if(tmdbSearchData.seasons[index].name.toLowerCase().includes("season")){
+                        seasonCount++;
+                        tempMap.set(tmdbSearchData.seasons[index].name,tmdbSearchData.seasons[index].episode_count);
+                        dropDown.push(tmdbSearchData.seasons[index].name);
+                    }
+                }
+                setSeasonsMap(tempMap);
+                setTotalSeason(seasonCount);
+                setDropDownText(dropDown);
             }
             if(tmdbSearchData.overview){
                 setShowDescription(tmdbSearchData.overview);
@@ -109,10 +158,52 @@ export default function ShowInfo() {
                         ))}
                     </View>
                 )}
-                <View style={styles.descriptionContainer}>
+                <View>
                     <Text style={styles.descriptionSubheading}>Overview</Text>
                     <Text style={styles.description}>{showDescription}</Text>
                 </View>
+                <Text style={styles.selectSeasonRangeText}>Select Season Range</Text>
+                <DropdownBar
+                    contents={new Set(dropDownText)}
+                    initialText="All"
+                    onSelectionChange={(value) => changeCustomSeasonRange(value)}
+                />
+                {customSeasonRange && (
+                    <View style={styles.customSeasonContainer}>
+                        <Text style={styles.customSeasonStartText}>Season start range</Text>
+                        <Text style={styles.customSeasonsEndText}>Season end range</Text>
+                    </View>
+                )}
+                <Pressable
+                    onPress={changeRunTime}
+                    style={{ flexDirection: "row", alignItems: "center", marginTop: 20, marginLeft : 5, marginBottom : 10 }}
+                >
+                    <Checkbox
+                        value={runTime}
+                        onValueChange={setRunTime}
+                        style={{marginRight : 5, borderRadius : 5}}
+                    />
+                    <Text style={{color : "white", fontWeight : "400", fontStyle : "italic"}}>Want a specifc episodes under a certain run time?</Text>
+                </Pressable>
+                {runTime && (
+                    <TextInput
+                        style={styles.runTimeLimitText}
+                        placeholder="Max amount of run time you're willing to watch"
+                        onChangeText={changeRunTimeLimit}
+                        placeholderTextColor="white"
+                        keyboardType="number-pad"
+                        value={runTimeLimit === 0 ? "" : runTimeLimit.toString()}                    
+                    />
+                )}
+                <Pressable
+                    onPress={randomizeEpisode}
+                    style={styles.submitButton}
+                    disabled={submitLoading}
+                >   
+                    <Text style={styles.submitButtonText}>
+                        {submitLoading ? "Processing... please wait" : "Randomize episode"}
+                    </Text>
+                </Pressable>
             </SafeAreaView>
         </ScrollView>
     );
@@ -172,16 +263,13 @@ const styles = StyleSheet.create({
     genreText : {
         color : "white"
     },
-    descriptionContainer : {
-
-    },
     descriptionSubheading : {
         textAlign : "left",
         color : "white",
         fontWeight : "500",
         fontSize : 20,
         marginHorizontal : 20,
-        marginTop : 30,
+        marginTop : 20,
     },
     description : {
         color : "#AEAEB2",
@@ -193,4 +281,45 @@ const styles = StyleSheet.create({
         marginTop : 5,
         marginHorizontal : 20,  
     },
+    submitButton : {
+        marginTop : 15,
+        backgroundColor : "#03AC13",        
+        borderRadius : 8,
+        width: "90%",
+        alignItems: "center"
+    },
+    submitButtonText : {
+        color : "white",
+        fontWeight: "600",
+        fontSize : 15,
+        paddingVertical : 12,
+    },
+    selectSeasonRangeText : {
+        color : "white",
+        fontSize : 15,
+        textAlign : "left",
+        width : "90%",
+        fontWeight : "500",
+        marginTop : 20,
+        marginBottom : 5
+    },
+    customSeasonContainer : {
+
+    },
+    customSeasonStartText : {
+
+    },
+    customSeasonsEndText : {
+
+    },
+    runTimeLimitText : {
+        color : "white",
+        fontWeight : "500",
+        borderWidth: 1,
+        borderColor: "white",
+        borderRadius: 8,
+        padding: 12,
+        width: "90%",
+        marginBottom : 10
+    }
 })  
