@@ -199,6 +199,7 @@ export default function ShowInfo() {
                     contents={new Set(dropDownText)}
                     initialText="All"
                     onSelectionChange={(value) => changeCustomSeasonRange(value)}
+                    disabled={submitLoading}
                 />
                 {customSeasonRange && (
                     <View style={styles.customSeasonContainer}>
@@ -216,6 +217,7 @@ export default function ShowInfo() {
                                 const seasonNum = parseInt(value.replace(/\D/g, ''));
                                 setStartSeasonRange(seasonNum);
                             }}
+                            disabled={submitLoading}
                         />
                         <Text style={styles.customSeasonsEndText}>Season end range</Text>
                         <DropdownBar
@@ -231,6 +233,7 @@ export default function ShowInfo() {
                                 const seasonNum = parseInt(value.replace(/\D/g, ''));
                                 setEndSeasonRange(seasonNum);
                             }}
+                            disabled={submitLoading}
                         />
                     </View>
                 )}

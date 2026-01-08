@@ -13,6 +13,7 @@ import SearchPage from './src/Screens/AppScreens/Search';
 import SettingPage from './src/Screens/AppScreens/Setting';
 import NavBar from './src/Components/NavBar';
 import ShowInfo from './src/Screens/AppScreens/ShowInfo';
+import ShowLinks from './src/Screens/AppScreens/ShowLinks';
 
 const Stack = createNativeStackNavigator();
 
@@ -48,6 +49,7 @@ export default function App() {
           <>
             <Stack.Screen name="NavBar" component={NavBar} options={{ headerShown : false}}/>
             <Stack.Screen name="ShowInfo" component={ShowInfo} options={{ headerShown : false }}/>
+            <Stack.Screen name="ShowRedirect" component={ShowLinks} options={{ headerShown : false}}/>
           </>
         ) : (
           <>

@@ -6,12 +6,14 @@ interface DropdownBarProps {
     contents: Set<string>;
     initialText: string;
     onSelectionChange?: (value: string) => void;
+    disabled : boolean;
 }
 
 export default function DropdownBar({ 
     contents, 
     initialText, 
-    onSelectionChange 
+    onSelectionChange ,
+    disabled = false
 }: DropdownBarProps) {
     const [dropDownEnable, setDropDownEnable] = useState(false);
     const [currentSelection, setCurrentSelection] = useState(initialText);
@@ -23,12 +25,17 @@ export default function DropdownBar({
     return (
         <View style={styles.container}>
             <Pressable
-                onPress={() => setDropDownEnable(prev => !prev)}
+                onPress={() => {
+                    if (!disabled) {
+                        setDropDownEnable(prev => !prev);
+                    }
+                }}
                 style={({ pressed }) => [
                     styles.currentSelection,
-                    pressed && styles.pressed,
-                    dropDownEnable && styles.dropdownOpen
+                    pressed && !disabled && styles.pressed,
+                    dropDownEnable && styles.dropdownOpen, 
                 ]}
+                disabled={disabled}
             >
                 <Text style={styles.currentSelectionText}>{currentSelection}</Text>
                 <Ionicons 
@@ -38,7 +45,7 @@ export default function DropdownBar({
                 />
             </Pressable>
 
-            {dropDownEnable && (
+            {dropDownEnable && !disabled && (
                 <View style={styles.dropdownList}>
                     {availableOptions.length > 0 ? (
                         availableOptions.map((item, index) => (
