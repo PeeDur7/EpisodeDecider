@@ -21,6 +21,7 @@ export type RootStackParamList = {
       seasonNum : number;
       overview : string;
       runTime : number;
+      firstAirDate : string;
     };
   };
   

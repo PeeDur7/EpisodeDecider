@@ -91,7 +91,8 @@ export default function ShowInfo() {
                         episodeNum : randomEpisode,
                         seasonNum : randomSeason,
                         overview : overview,
-                        runTime : runtime
+                        runTime : runtime,
+                        firstAirDate : firstAirDate
                     });
                 }
             }

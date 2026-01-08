@@ -30,6 +30,7 @@ interface recentlyWatchedEpisodes {
     showId : number;
     overview : string;
     runTime : number;
+    showFirstAirDate : string
 }
 
 export default function SearchPage(){
@@ -262,7 +263,8 @@ export default function SearchPage(){
                                         showPoster : episode.poster,
                                         showId : episode.showId,
                                         overview : episode.overview,
-                                        runTime : episode.runTime
+                                        runTime : episode.runTime,
+                                        firstAirDate : episode.showFirstAirDate
                                     })}
                                 >
                                     <Text style={styles.showTitle}>{episode.show}</Text>

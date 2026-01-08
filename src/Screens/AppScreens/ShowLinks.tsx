@@ -6,7 +6,7 @@ import { RootStackParamList } from "../../Navigation/types";
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import { auth, db } from "../../Firebase/FirebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import  Constants  from "expo-constants";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type ShowLinks = RouteProp<RootStackParamList, 'ShowRedirect'>;
@@ -23,22 +23,24 @@ interface userWatchedEpisodes {
     name : string,
     num : number,
     season : number;
-    poster : string;
+    poster? : string;
     showId : number;
     overview : string;
     runTime : number;
+    showFirstAirDate : string;
 }
 
 export default function ShowLinks(){
     const [loading, setLoading] = useState(false);
+    const [submitLoading, setSubmitLoading] = useState(false);
     const [useruid, setUseruid] = useState("");
     const [recenetlyWathcedShows, setRecentlyWatchedShows] = useState<Set<userWatchedShows>>(new Set());
     const [recentlyWatchedEP, setRecentlyWatchedEP] = useState<Set<userWatchedEpisodes>>(new Set());
-    const [usersPreferedServices, setUserPreferedServices] = useState<Set<String>>(new Set());
-    const [streamingServicesOfShows, setStreamingServicesOfShows] = useState<Set<String>>(new Set());
-
+    const [usersPreferedServices, setUserPreferedServices] = useState<Set<string>>(new Set());
+    const [streamingServicesOfShows, setStreamingServicesOfShows] = useState<Set<string>>(new Set());
+    const [streamingServicesWithLinks, setStreamingServicesWithLinks] = useState<Map<string,string>>(new Map());
+    const [orderedStreamingServices, setOrderStreamingServices] = useState<Map<string,string>>(new Map());
     const navigation = useNavigation<NavigationProp>();
-    
     const route = useRoute<ShowLinks>();
     const showTitle = route.params.showTitle;
     const showId = route.params.showId;
@@ -48,6 +50,7 @@ export default function ShowLinks(){
     const overview = route.params.overview;
     const runtime = route.params.runTime;
     const showPoster = route.params.showPoster;
+    const firstAirDate = route.params.firstAirDate;
 
     const performSearch = async () => {
         try{
@@ -112,13 +115,88 @@ export default function ShowLinks(){
         setLoading(false);
     },[]);
 
-    const submitRecentlyWatchedEPToDB = () => {
+    useEffect(() => {
+        createStreamingServicesWithLinks();
+    },[useruid]);
 
+    const submitRecentlyWatchedEPToDB = async () => {
+        const newEpisode : userWatchedEpisodes = {
+            show : showTitle,
+            showId : showId,
+            name : episodeName,
+            num : episodeNum,
+            season : seasonNum,
+            poster : showPoster,
+            overview : overview,
+            runTime : runtime,
+            showFirstAirDate : firstAirDate
+        };
+        const newSet = new Set(recentlyWatchedEP).add(newEpisode);
+        setRecentlyWatchedEP(newSet);
+        const user = auth.currentUser;
+
+        if(user && user.uid){
+            try{
+                await updateDoc(doc(db,"users",user.uid),{
+                    recentlyWatchedEP : Array.from(newSet)
+                });
+            }catch(error){
+                console.log(error);
+            }
+        }
     };
 
-    const submitRecentlyWatchedShowToDB = () => {
+    const submitRecentlyWatchedShowToDB = async () => {
+        const newShow : userWatchedShows = {
+            id : showId,
+            showTitle : showTitle,
+            poster : showPoster,
+            firstAirDate : firstAirDate
+        };
+        const newSet = new Set(recenetlyWathcedShows).add(newShow);
+        setRecentlyWatchedShows(newSet);
+        const user = auth.currentUser;
 
+        if(user && user.uid){
+            try{
+                await updateDoc(doc(db,"users",user.uid), {
+                    recentlyWatchedShows : Array.from(newSet)
+                })
+            }catch(error){
+                console.log(error);
+            }
+        }
     };
+
+    const sortStreamingProviders = () => {
+        const tempStreamingProviders = new Map<string,string>();
+        Array.from(usersPreferedServices).filter(service => streamingServicesOfShows.has(service)).forEach((service) => {
+            const link = streamingServicesWithLinks.get(service);
+            if(link !== undefined){
+                tempStreamingProviders.set(service, link);
+            }
+        });
+        Array.from(streamingServicesOfShows).filter(service => !usersPreferedServices.has(service)).forEach((service) => {
+            const link = streamingServicesWithLinks.get(service);
+            if(link !== undefined){
+                tempStreamingProviders.set(service,link);
+            }
+        })
+        setOrderStreamingServices(tempStreamingProviders);
+    };
+
+    const createStreamingServicesWithLinks = async () => {
+        const tempStreamingProvidersWithLinks = new Map<string,string>();
+        
+    };
+
+
+
+    if(loading){
+        return(
+            <SafeAreaView style={styles.container}/>
+        );
+    }
 
     return(
         <ScrollView style={{ backgroundColor : "#3A3A3C", flex : 1 }} bounces={false} showsVerticalScrollIndicator={false}>
