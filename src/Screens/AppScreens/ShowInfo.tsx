@@ -8,7 +8,6 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { ScrollView } from "react-native-gesture-handler";
 import DropdownBar from "../../Components/DropdownBar";
-import Checkbox from "expo-checkbox";
 type ShowInfoRouteProp = RouteProp<RootStackParamList, 'ShowInfo'>;
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -17,23 +16,21 @@ export default function ShowInfo() {
     const [submitLoading, setSubmitLoading] = useState(false);
     const [dropDownText, setDropDownText] = useState<string []>([]);
     const [totalSeasons, setTotalSeason] = useState(0);
-    //just in case user wants episodes that are shorter than a specifc amount of time
-    const [runTime, setRunTime] = useState(false);
-    const [runTimeLimit, setRunTimeLimit] = useState(0);
 
     //if true, users will enter their own custom ranges, if false, all seasons will be searched
     const [customSeasonRange, setCustomSeasonRange] = useState(false);
-
     //these 2 variables are for users to enter season ranges 
-    //if these 2 are same value, select from the same season
-    const [startSeasonRange, setStartSeasonRange] = useState(0);
-    const [endSeasonRange, setEndSeasonRange] = useState(0);
+    const [startSeasonRange, setStartSeasonRange] = useState(1);
+    const [endSeasonRange, setEndSeasonRange] = useState(1);
+
+    const [selectSingleSeason, setSelectSingleSeason] = useState(false);
+    const [selectedSeason, setSelectedSeason] = useState(1); //this is for if user selects an individual season
 
     const [showDescription, setShowDescription] = useState("");
     const [genres, setGenres] = useState<string[]>([]);
     const [seasonsMap, setSeasonsMap] = useState<Map<string,number>>(new Map());
     const route = useRoute<ShowInfoRouteProp>();
-    const showTitle = route.params.showTitle; //get the showTitle parameter from previous pages
+    const showTitle = route.params.showTitle; 
     const showId = route.params.showId;
     const showPoster = route.params.showPoster;
     const firstAirDate = route.params.firstAirDate;
@@ -44,30 +41,60 @@ export default function ShowInfo() {
             setCustomSeasonRange(true);
             setStartSeasonRange(1);
             setEndSeasonRange(totalSeasons);
-        } else {
+            setSelectSingleSeason(false);
+        } else if(text.trim().toLowerCase() === "all") {
             setCustomSeasonRange(false);
-            setStartSeasonRange(0);
-            setEndSeasonRange(0);
+            setStartSeasonRange(1);
+            setEndSeasonRange(totalSeasons);
+            setSelectSingleSeason(false);
+        } else {
+            const seasonNum = parseInt(text.replace(/\D/g, '')); //parses Season # and gets only #
+            setSelectedSeason(seasonNum);
+            setSelectSingleSeason(true);
+            setCustomSeasonRange(false);
+            setStartSeasonRange(1);
+            setEndSeasonRange(totalSeasons);
         }
-    }  
-
-    const changeRunTime = () => {
-        if(runTime){
-            setRunTimeLimit(0);
-        }
-        setRunTime(prev => !prev);
     }
 
-    const changeRunTimeLimit = (text : string) => {
-        const numericValue = text.replace(/[^0-9]/g, '');
-        setRunTimeLimit(numericValue === "" ? 0 : +numericValue);
-    }
-
-    //finds a random episode based on criteria user wants, then sends it to the other page
     const randomizeEpisode = async () => {
         setSubmitLoading(true);
         try{
-
+            let randomSeason = 0;
+            if(selectSingleSeason && selectedSeason){ //for a random episode in an indiviudal season
+                randomSeason = selectedSeason;
+            } else if(customSeasonRange){
+                randomSeason = Math.floor(Math.random() * (endSeasonRange - startSeasonRange + 1)) + startSeasonRange;
+            } else {
+                randomSeason = Math.floor(Math.random() * (totalSeasons) + 1);
+            }
+            const randomSeasonString = `Season ${randomSeason}`;
+            const episodesInSeason = seasonsMap.get(randomSeasonString);
+            if(!episodesInSeason){
+                console.log(`Season ${randomSeason} not found`);
+                return;            
+            }
+            if(episodesInSeason){
+                const randomEpisode = Math.floor(Math.random() * episodesInSeason) + 1;
+                const tmdbAPI = await fetch(`https://api.themoviedb.org/3/tv/${showId}/season/${randomSeason}?api_key=${Constants.expoConfig?.extra?.tmdbApiKey}`);
+                const tmdbData = await tmdbAPI.json();
+                if(tmdbData.episodes.length > 0){
+                    const episodeAPI = tmdbData.episodes[randomEpisode-1];
+                    const overview = episodeAPI.overview;
+                    const episodeName = episodeAPI.name;
+                    const runtime = episodeAPI.runtime;
+                    navigation.navigate("ShowRedirect",{
+                        showTitle : showTitle,
+                        showId : showId,
+                        episodeName : episodeName,
+                        showPoster : showPoster,
+                        episodeNum : randomEpisode,
+                        seasonNum : randomSeason,
+                        overview : overview,
+                        runTime : runtime
+                    });
+                }
+            }
         }catch(error){
             console.log(error);
         }finally{
@@ -94,6 +121,7 @@ export default function ShowInfo() {
                 }
                 setSeasonsMap(tempMap);
                 setTotalSeason(seasonCount);
+                setEndSeasonRange(seasonCount);
                 setDropDownText(dropDown);
             }
             if(tmdbSearchData.overview){
@@ -205,27 +233,6 @@ export default function ShowInfo() {
                             }}
                         />
                     </View>
-                )}
-                <Pressable
-                    onPress={changeRunTime}
-                    style={{ flexDirection: "row", alignItems: "center", marginTop: 20, marginLeft : 5, marginBottom : 10 }}
-                >
-                    <Checkbox
-                        value={runTime}
-                        onValueChange={setRunTime}
-                        style={{marginRight : 5, borderRadius : 5}}
-                    />
-                    <Text style={{color : "white", fontWeight : "400", fontStyle : "italic"}}>Want a specifc episodes under a certain run time?</Text>
-                </Pressable>
-                {runTime && (
-                    <TextInput
-                        style={styles.runTimeLimitText}
-                        placeholder="Max amount of run time you're willing to watch"
-                        onChangeText={changeRunTimeLimit}
-                        placeholderTextColor="white"
-                        keyboardType="number-pad"
-                        value={runTimeLimit === 0 ? "" : runTimeLimit.toString()}                    
-                    />
                 )}
                 <Pressable
                     onPress={randomizeEpisode}
@@ -358,14 +365,4 @@ const styles = StyleSheet.create({
         marginTop: 15,
         marginBottom: 5,
     },
-    runTimeLimitText : {
-        color : "white",
-        fontWeight : "500",
-        borderWidth: 1,
-        borderColor: "white",
-        borderRadius: 8,
-        padding: 12,
-        width: "90%",
-        marginBottom : 10
-    }
 })  

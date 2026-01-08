@@ -24,8 +24,12 @@ interface ShowResult {
 interface recentlyWatchedEpisodes {
     show : string,
     name : string,
-    num : string,
-    season : string;
+    num : number,
+    season : number;
+    poster : string;
+    showId : number;
+    overview : string;
+    runTime : number;
 }
 
 export default function SearchPage(){
@@ -251,9 +255,14 @@ export default function SearchPage(){
                                     key={index}
                                     style={styles.recentlyWatchedEpisodes}
                                     onPress={() => navigation.navigate("ShowRedirect", {
-                                        showTitle : episode.name,
+                                        showTitle : episode.show,
+                                        episodeName : episode.name,
                                         episodeNum : episode.num,
-                                        seasonNum : episode.season
+                                        seasonNum : episode.season,
+                                        showPoster : episode.poster,
+                                        showId : episode.showId,
+                                        overview : episode.overview,
+                                        runTime : episode.runTime
                                     })}
                                 >
                                     <Text style={styles.showTitle}>{episode.show}</Text>

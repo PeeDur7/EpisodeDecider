@@ -14,8 +14,13 @@ export type RootStackParamList = {
     };
     ShowRedirect : {
       showTitle : string;
-      episodeNum : string;
-      seasonNum : string;
+      showId : number;
+      episodeName : string;
+      showPoster? : string;
+      episodeNum : number;
+      seasonNum : number;
+      overview : string;
+      runTime : number;
     };
   };
   
