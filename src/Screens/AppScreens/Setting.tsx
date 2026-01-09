@@ -20,7 +20,6 @@ export default function SettingPage(){
         "Paramount Plus",
         "HBO Max",
         "Hulu",
-        "YouTube TV",
         "Disney Plus"
     ];
 

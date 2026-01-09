@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { auth, db } from "../../Firebase/FirebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import  Constants  from "expo-constants";
+import * as streamingAvailability from "streaming-availability";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type ShowLinks = RouteProp<RootStackParamList, 'ShowRedirect'>;
 
@@ -37,7 +38,7 @@ export default function ShowLinks(){
     const [recenetlyWathcedShows, setRecentlyWatchedShows] = useState<Set<userWatchedShows>>(new Set());
     const [recentlyWatchedEP, setRecentlyWatchedEP] = useState<Set<userWatchedEpisodes>>(new Set());
     const [usersPreferedServices, setUserPreferedServices] = useState<Set<string>>(new Set());
-    const [streamingServicesOfShows, setStreamingServicesOfShows] = useState<Set<string>>(new Set());
+    const [streamingServicesOfShows, setStreamingServicesOfShows] = useState<Map<string,number>>(new Map());
     const [streamingServicesWithLinks, setStreamingServicesWithLinks] = useState<Map<string,string>>(new Map());
     const [orderedStreamingServices, setOrderStreamingServices] = useState<Map<string,string>>(new Map());
     const navigation = useNavigation<NavigationProp>();
@@ -52,31 +53,46 @@ export default function ShowLinks(){
     const showPoster = route.params.showPoster;
     const firstAirDate = route.params.firstAirDate;
 
+    const selectiveServices = [
+        "Amazon Prime Video",
+        "Netflix",
+        "Paramount Plus",
+        "HBO Max",
+        "Hulu",
+        "Disney Plus"
+    ];
+
     const performSearch = async () => {
         try{
             const tmdbAPI = await fetch(`https://api.themoviedb.org/3/tv/${showId}/watch/providers?api_key=${Constants.expoConfig?.extra?.tmdbApiKey}`);
             const tmdbData = await tmdbAPI.json();
-            let streamingProviders = new Set<string>();
+            let streamingProviders = new Map<string,number>();
             if(tmdbData.results){
                 if(tmdbData.results.US){
                     if(tmdbData.results.US.buy){
                         for(let i = 0; i < tmdbData.results.US.buy.length; i++){
-                            if(tmdbData.results.US.buy[i].provider_name){
-                                streamingProviders.add(tmdbData.results.US.buy[i].provider_name);
+                            const provider = tmdbData.results.US.buy[i].provider_name;
+                            const providerId = tmdbData.results.US.buy[i].provider_id;
+                            if(provider && selectiveServices.includes(provider) && providerId){
+                                streamingProviders.set(provider,providerId);
                             }
                         }
                     }
                     if(tmdbData.results.US.flatrate){
                         for(let i = 0; i<tmdbData.results.US.flatrate.length; i++){
-                            if(tmdbData.results.US.flatrate[i].provider_name){
-                                streamingProviders.add(tmdbData.results.US.flatrate[i].provider_name); 
+                            const provider = tmdbData.results.US.flatrate[i].provider_name
+                            const providerId = tmdbData.results.US.flatrate[i].provider_id;
+                            if(provider && selectiveServices.includes(provider) && providerId){
+                                streamingProviders.set(provider,providerId); 
                             }
                         }
                     }
                     if(tmdbData.results.US.ads){
                         for(let i = 0; i<tmdbData.results.US.ads.length; i++){
-                            if(tmdbData.results.US.ads[i].provider_name){
-                                streamingProviders.add(tmdbData.results.US.ads[i].provider_name);
+                            const provider = tmdbData.results.US.ads[i].provider_name;
+                            const providerId = tmdbData.results.US.ads[i].provider_id
+                            if(provider && selectiveServices.includes(provider) && providerId){
+                                streamingProviders.set(provider,providerId);
                             }
                         }
                     }
@@ -86,38 +102,50 @@ export default function ShowLinks(){
             setStreamingServicesOfShows(streamingProviders);
         }catch(error){
             console.log(error);
-        } finally{
-            setLoading(false);
         }
     };
 
     useEffect(() => {
-        setLoading(true);
-        const user = auth.currentUser;
-        if(user && user.uid){
-            setUseruid(user.uid);
-            getDoc(doc(db,"users",user.uid)).then(userDoc => {
-                if(userDoc.exists()){
-                    const userData = userDoc.data();
-                    if(userData.recentlyWatchedShows){
-                        setRecentlyWatchedShows(new Set(userData.recentlyWatchedShows));
-                    }
-                    if(userData.recentlyWatchedEP){
-                        setRecentlyWatchedEP(new Set(userData.recentlyWatchedEP));
-                    }
-                    if(userData.preferredStreamingServices){
-                        setUserPreferedServices(new Set(userData.preferredStreamingServices));
-                    }
+        const initalize = async () => {
+            setLoading(true);
+            try{
+                const user = auth.currentUser;
+                if(user && user.uid){
+                    setUseruid(user.uid);
+                    getDoc(doc(db,"users",user.uid)).then(userDoc => {
+                        if(userDoc.exists()){
+                            const userData = userDoc.data();
+                            if(userData.recentlyWatchedShows){
+                                setRecentlyWatchedShows(new Set(userData.recentlyWatchedShows));
+                            }
+                            if(userData.recentlyWatchedEP){
+                                setRecentlyWatchedEP(new Set(userData.recentlyWatchedEP));
+                            }
+                            if(userData.preferredStreamingServices){
+                                setUserPreferedServices(new Set(userData.preferredStreamingServices));
+                            }
+                        }
+                    });
                 }
-            });
-        }
-        performSearch();
-        setLoading(false);
+                await performSearch();
+            }catch(error){
+                console.log(error);
+            }
+        };
+        initalize();
     },[]);
 
     useEffect(() => {
-        createStreamingServicesWithLinks();
-    },[useruid]);
+        if (streamingServicesOfShows.size > 0) {
+            createStreamingServicesWithLinks();
+        }    
+    },[streamingServicesOfShows]);
+
+    useEffect(() => {
+        if (streamingServicesWithLinks.size > 0 && usersPreferedServices.size > 0) {
+            sortStreamingProviders();
+        }
+    },[streamingServicesWithLinks,usersPreferedServices]);
 
     const submitRecentlyWatchedEPToDB = async () => {
         const newEpisode : userWatchedEpisodes = {
@@ -176,7 +204,7 @@ export default function ShowLinks(){
                 tempStreamingProviders.set(service, link);
             }
         });
-        Array.from(streamingServicesOfShows).filter(service => !usersPreferedServices.has(service)).forEach((service) => {
+        Array.from(streamingServicesOfShows.keys()).filter(service => !usersPreferedServices.has(service)).forEach((service) => {
             const link = streamingServicesWithLinks.get(service);
             if(link !== undefined){
                 tempStreamingProviders.set(service,link);
@@ -186,11 +214,45 @@ export default function ShowLinks(){
     };
 
     const createStreamingServicesWithLinks = async () => {
+        setLoading(true);
         const tempStreamingProvidersWithLinks = new Map<string,string>();
-        
+
+        try{
+            const RAPID_API_KEY = Constants.expoConfig?.extra?.movieOfTheNightApiKey;
+            const client = new streamingAvailability.Client(new streamingAvailability.Configuration({
+                apiKey : RAPID_API_KEY
+            }));
+            const showData = await client.showsApi.getShow({
+                id : showId.toString()
+            });
+            const streamingOptions = showData.streamingOptions;
+            if(streamingOptions && streamingOptions.us){
+                const streamingOptionsList = streamingOptions.us;
+                for(let i = 0; i <streamingOptionsList.length; i ++){
+                    const serviceName = streamingOptionsList[i].service.name;
+                    if(streamingServicesOfShows.has(serviceName)){ 
+                        const link = streamingOptionsList[i].link;
+                        const videoLink = streamingOptionsList[i].videoLink;
+                        if(videoLink){
+                            tempStreamingProvidersWithLinks.set(serviceName, videoLink);
+                        }
+                        else if(link){
+                            tempStreamingProvidersWithLinks.set(serviceName, link);
+                        }
+                    }
+                }
+            }
+            setStreamingServicesWithLinks(tempStreamingProvidersWithLinks);
+        }catch(error){
+            console.log(error);
+        }finally{
+            setLoading(false);
+        }
     };
 
+    const openStreamingLink = async (serviceName: string, webLink: string) => {
 
+    }
 
     if(loading){
         return(

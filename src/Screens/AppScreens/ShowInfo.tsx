@@ -139,7 +139,10 @@ export default function ShowInfo() {
     };
 
     useEffect(() => {
-        performSearch();
+        const initalize = async () => {
+            await performSearch();
+        }
+        initalize();
     },[]);
 
     if(loading){
