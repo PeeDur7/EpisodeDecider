@@ -1,5 +1,5 @@
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { StyleSheet } from "react-native";
+import { Linking, StyleSheet } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { RootStackParamList } from "../../Navigation/types";
@@ -32,7 +32,7 @@ interface userWatchedEpisodes {
 }
 
 export default function ShowLinks(){
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [submitLoading, setSubmitLoading] = useState(false);
     const [useruid, setUseruid] = useState("");
     const [recenetlyWathcedShows, setRecentlyWatchedShows] = useState<Set<userWatchedShows>>(new Set());
@@ -107,7 +107,6 @@ export default function ShowLinks(){
 
     useEffect(() => {
         const initalize = async () => {
-            setLoading(true);
             try{
                 const user = auth.currentUser;
                 if(user && user.uid){
@@ -142,9 +141,10 @@ export default function ShowLinks(){
     },[streamingServicesOfShows]);
 
     useEffect(() => {
-        if (streamingServicesWithLinks.size > 0 && usersPreferedServices.size > 0) {
+        if (streamingServicesWithLinks.size > 0) {
             sortStreamingProviders();
         }
+        setLoading(false);
     },[streamingServicesWithLinks,usersPreferedServices]);
 
     const submitRecentlyWatchedEPToDB = async () => {
@@ -214,7 +214,6 @@ export default function ShowLinks(){
     };
 
     const createStreamingServicesWithLinks = async () => {
-        setLoading(true);
         const tempStreamingProvidersWithLinks = new Map<string,string>();
 
         try{
@@ -245,14 +244,52 @@ export default function ShowLinks(){
             setStreamingServicesWithLinks(tempStreamingProvidersWithLinks);
         }catch(error){
             console.log(error);
-        }finally{
-            setLoading(false);
         }
     };
 
     const openStreamingLink = async (serviceName: string, webLink: string) => {
-
+        setSubmitLoading(true);
+        try{
+            const appDeepLink = convertToAppDeepLink(serviceName, webLink);
+            const canOpenAppDeepLink = await Linking.canOpenURL(appDeepLink);
+            if(canOpenAppDeepLink){
+                await Linking.openURL(appDeepLink);
+                await submitRecentlyWatchedEPToDB();
+                await submitRecentlyWatchedShowToDB();
+            }else{
+                const canAppOpen = await Linking.canOpenURL(webLink);
+                if(canAppOpen){
+                    await Linking.openURL(webLink);
+                    await submitRecentlyWatchedEPToDB();
+                    await submitRecentlyWatchedShowToDB();
+                } else {
+                    console.log("link cannot be open");
+                }
+            }
+        }catch(error){
+            console.log(error);
+        }finally{
+            setSubmitLoading(false);
+        }
     }
+
+    const convertToAppDeepLink = (serviceName : string, webLink : string) => {
+        if(serviceName === "Netflix"){
+            return webLink.replace("https://","nflx://");
+        }else if(serviceName === "Prime Video"){
+            return webLink;
+        }else if(serviceName === "Disney Plus" || serviceName === "Disney+"){
+            return webLink;
+        }else if(serviceName === "Hulu"){
+            return webLink.replace("https://www.hulu.com/","hulu://");
+        }else if(serviceName === "Paramount Plus" || serviceName === "Paramount+"){
+            return webLink.replace("https://www.paramountplus.com/", "paramountplus://");
+        }else if(serviceName === "HBO Max"){
+            return webLink;
+        }else{
+            return webLink;
+        }
+    };
 
     if(loading){
         return(
