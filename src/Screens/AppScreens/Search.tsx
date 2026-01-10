@@ -249,30 +249,37 @@ export default function SearchPage(){
                             <Text style={styles.noRecentWatchedEPText}>No episodes watched recently. Start searching!</Text>
                         )}
                         {recentlyWatchedEP.length > 0 && (
-                            Array.from(recentlyWatchedEP)
-                            .slice(0,endIndexForRecent)
-                            .map((episode, index) => (
-                                <Pressable
-                                    key={index}
-                                    style={styles.recentlyWatchedEpisodes}
-                                    onPress={() => navigation.navigate("ShowRedirect", {
-                                        showTitle : episode.show,
-                                        episodeName : episode.name,
-                                        episodeNum : episode.num,
-                                        seasonNum : episode.season,
-                                        showPoster : episode.poster,
-                                        showId : episode.showId,
-                                        overview : episode.overview,
-                                        runTime : episode.runTime,
-                                        firstAirDate : episode.showFirstAirDate
-                                    })}
-                                >
-                                    <Text style={styles.showTitle}>{episode.show}</Text>
-                                    <Text style={styles.episode}>{episode.name}</Text>
-                                </Pressable>
-                            ))
+                            <View style={styles.recentlyWatchedList}>
+                                {Array.from(recentlyWatchedEP)
+                                .slice(0,endIndexForRecent)
+                                .map((episode, index) => (
+                                    <Pressable
+                                        key={index}
+                                        style={({pressed}) => [
+                                            styles.recentlyWatchedEpisodes,
+                                            pressed && { opacity : 0.6}
+                                        ]}
+                                        onPress={() => navigation.navigate("ShowRedirect", {
+                                            showTitle : episode.show,
+                                            episodeName : episode.name,
+                                            episodeNum : episode.num,
+                                            seasonNum : episode.season,
+                                            showPoster : episode.poster,
+                                            showId : episode.showId,
+                                            overview : episode.overview,
+                                            runTime : episode.runTime,
+                                            firstAirDate : episode.showFirstAirDate
+                                        })}
+                                    >
+                                        <Text style={styles.showTitle}>{episode.show}</Text>
+                                        <Text style={styles.episode}>S{episode.season}E{episode.num} {episode.name}</Text>
+                                        <Image style={styles.recentWatchedEPPoster} source={{uri : episode.poster}}/>
+                                    </Pressable>
+                                ))}
+                            </View>
                         )}
                     </View>
+
                     { endIndexForRecent < recentlyWatchedEP.length && (
                         <Pressable
                             onPress={paginationForRecent}
@@ -312,16 +319,33 @@ const styles = StyleSheet.create({
         width : "92%"
     },
     showTitle : {
-
+        color: "white",
+        fontSize: 18,
+        fontWeight: "600",
+        marginBottom: 4,
     }, 
     episode : {
-
+        color: "#AEAEB2",
+        fontSize: 14,
+        marginBottom: 10,
     },
     recentlyWatchedEpisodesContainer : {
-        marginTop : 20
+        marginTop: 30,
+        width: "92%",
+    },
+    recentlyWatchedList : {
+        marginTop: 15,
+        gap: 15,
     },
     recentlyWatchedEpisodes : {
-
+        backgroundColor: "#2C2C2E",
+        borderRadius: 10,
+        padding: 15,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
     },
     loadMore : {
         marginTop : 15,
@@ -341,8 +365,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontStyle: "italic",
         marginTop: 5,
-        width: "100%",
-        marginLeft : 10
     },
     recentlyWatchedEpisodesSubHeading : {
         fontSize : 20,
@@ -435,4 +457,9 @@ const styles = StyleSheet.create({
         color: '#AEAEB2',
         fontSize: 14,
     },
+    recentWatchedEPPoster : {
+        width: 100,    
+        height: 175,      
+        borderRadius: 6, 
+    }
 });

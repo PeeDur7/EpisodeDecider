@@ -98,7 +98,6 @@ export default function ShowLinks(){
                             const isSelective = selectiveServices.includes(provider) || 
                                           selectiveServices.some(s => normalizeServiceName(s) === normalized);
                             if(isSelective && provider && providerId){
-                                console.log(`TMDB Provider found: ${provider} -> Normalized: ${normalized}`);
                                 streamingProviders.set(normalized,providerId);
                             }
                         }
@@ -143,6 +142,7 @@ export default function ShowLinks(){
                     });
                 }
                 await performSearch();
+                
             }catch(error){
                 console.log(error);
             }
@@ -160,7 +160,6 @@ export default function ShowLinks(){
         if (streamingServicesWithLinks.size > 0) {
             sortStreamingProviders();
         }
-        setLoading(false);
     },[streamingServicesWithLinks,usersPreferedServices]);
 
     const submitRecentlyWatchedEPToDB = async () => {
@@ -261,6 +260,8 @@ export default function ShowLinks(){
             setStreamingServicesWithLinks(tempStreamingProvidersWithLinks);
         }catch(error){
             console.log(error);
+        }finally{
+            setLoading(false);
         }
     };
 
@@ -310,7 +311,12 @@ export default function ShowLinks(){
 
     if(loading){
         return(
-            <SafeAreaView style={styles.container}/>
+            <SafeAreaView style={[styles.container, {justifyContent : "center"}]}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color="#03AC13" />
+                    <Text style={styles.loadingText}>Loading page</Text>
+                </View>
+            </SafeAreaView>
         );
     }
 
@@ -335,7 +341,7 @@ export default function ShowLinks(){
                     <Text style={styles.runtime}>{runtime} min runtime</Text>
                     <Text style={styles.overview}>Episode Overview</Text>
                     <Text style={styles.overviewText}>{overview}</Text>
-                    
+
                     {orderedStreamingServices.size > 0 && (
                         <View style={styles.streamingServicesContainer}>
                             {Array.from(orderedStreamingServices.keys()).map((service) => {
@@ -469,5 +475,5 @@ const styles = StyleSheet.create({
         fontSize : 20,
         fontWeight : "500",
         fontStyle : "italic"
-    }
+    },
 })

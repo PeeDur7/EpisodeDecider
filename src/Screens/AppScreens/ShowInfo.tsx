@@ -115,7 +115,7 @@ export default function ShowInfo() {
                 let seasonCount = 0;
                 for(let index = 0; index < tmdbSearchData.seasons.length; index++){
                     if(tmdbSearchData.seasons[index].name.toLowerCase().includes("season") && 
-                        tmdbSearchData.seasons[index].air_date !== null && tmdbSearchData.seasons[index].overview){
+                        tmdbSearchData.seasons[index].air_date !== null && tmdbSearchData.seasons[index].episode_count){
                         seasonCount++;
                         tempMap.set(tmdbSearchData.seasons[index].name,tmdbSearchData.seasons[index].episode_count);
                         dropDown.push(tmdbSearchData.seasons[index].name);
@@ -244,11 +244,14 @@ export default function ShowInfo() {
                 )}
                 <Pressable
                     onPress={randomizeEpisode}
-                    style={styles.submitButton}
+                    style={({pressed}) => [
+                        styles.submitButton,
+                        pressed && { opacity : 0.6 }
+                    ]}
                     disabled={submitLoading}
                 >   
                     <Text style={styles.submitButtonText}>
-                        {submitLoading ? "Processing... please wait" : "Randomize episode"}
+                        Randomize episode
                     </Text>
                 </Pressable>
             </SafeAreaView>
