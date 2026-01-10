@@ -114,7 +114,8 @@ export default function ShowInfo() {
                 const tempMap = new Map<string,number>();
                 let seasonCount = 0;
                 for(let index = 0; index < tmdbSearchData.seasons.length; index++){
-                    if(tmdbSearchData.seasons[index].name.toLowerCase().includes("season")){
+                    if(tmdbSearchData.seasons[index].name.toLowerCase().includes("season") && 
+                        tmdbSearchData.seasons[index].air_date !== null && tmdbSearchData.seasons[index].overview){
                         seasonCount++;
                         tempMap.set(tmdbSearchData.seasons[index].name,tmdbSearchData.seasons[index].episode_count);
                         dropDown.push(tmdbSearchData.seasons[index].name);
@@ -297,10 +298,13 @@ const styles = StyleSheet.create({
     },
     genreTagsContainer : {
         flexDirection : "row",
-        marginTop : 10
+        flexWrap : "wrap",
+        marginTop : 10,
+        justifyContent : "center",
     },
     genreTag : {
         marginHorizontal : 5,
+        marginVertical : 5,
         borderRadius : 15,
         backgroundColor : "#0096C7",
         paddingVertical : 5,

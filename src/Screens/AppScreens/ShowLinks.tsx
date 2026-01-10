@@ -1,5 +1,5 @@
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Linking, StyleSheet } from "react-native";
+import { ActivityIndicator, Image, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { RootStackParamList } from "../../Navigation/types";
@@ -9,6 +9,7 @@ import { auth, db } from "../../Firebase/FirebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import  Constants  from "expo-constants";
 import * as streamingAvailability from "streaming-availability";
+import { Ionicons } from "@expo/vector-icons";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type ShowLinks = RouteProp<RootStackParamList, 'ShowRedirect'>;
 
@@ -62,6 +63,26 @@ export default function ShowLinks(){
         "Disney Plus"
     ];
 
+    const normalizeServiceName = (name: string): string => {
+        const nameMap: { [key: string]: string } = {
+            "Amazon Prime Video": "Prime Video",
+            "Amazon Video" : "Prime Video",
+            "Prime Video": "Prime Video",
+            "Paramount Plus": "Paramount+",
+            "Paramount Plus Apple TV Channel" : "Paramount+",
+            "Paramount+ Amazon Channel" : "Paramount+",
+            "Paramount+ Roku Premium Channel" : "Paramount+",
+            "Paramount Plus Essential" : "Paramount+",
+            "Paramount Plus Premium" : "Paramount+",
+            "Paramount+": "Paramount+",
+            "Disney Plus": "Disney+",
+            "Disney+": "Disney+",
+            "HBO Max": "Max", 
+            "Max": "Max"
+        };
+        return nameMap[name] || name;
+    };
+
     const performSearch = async () => {
         try{
             const tmdbAPI = await fetch(`https://api.themoviedb.org/3/tv/${showId}/watch/providers?api_key=${Constants.expoConfig?.extra?.tmdbApiKey}`);
@@ -69,32 +90,27 @@ export default function ShowLinks(){
             let streamingProviders = new Map<string,number>();
             if(tmdbData.results){
                 if(tmdbData.results.US){
-                    if(tmdbData.results.US.buy){
-                        for(let i = 0; i < tmdbData.results.US.buy.length; i++){
-                            const provider = tmdbData.results.US.buy[i].provider_name;
-                            const providerId = tmdbData.results.US.buy[i].provider_id;
-                            if(provider && selectiveServices.includes(provider) && providerId){
-                                streamingProviders.set(provider,providerId);
+                    const processProviders = (providers : any []) => {
+                        for(let i = 0; i< providers.length; i++){
+                            const provider = providers[i].provider_name
+                            const providerId = providers[i].provider_id;
+                            const normalized = normalizeServiceName(provider);
+                            const isSelective = selectiveServices.includes(provider) || 
+                                          selectiveServices.some(s => normalizeServiceName(s) === normalized);
+                            if(isSelective && provider && providerId){
+                                console.log(`TMDB Provider found: ${provider} -> Normalized: ${normalized}`);
+                                streamingProviders.set(normalized,providerId);
                             }
                         }
+                    } ;
+                    if(tmdbData.results.US.buy){
+                        processProviders(tmdbData.results.US.buy);
                     }
                     if(tmdbData.results.US.flatrate){
-                        for(let i = 0; i<tmdbData.results.US.flatrate.length; i++){
-                            const provider = tmdbData.results.US.flatrate[i].provider_name
-                            const providerId = tmdbData.results.US.flatrate[i].provider_id;
-                            if(provider && selectiveServices.includes(provider) && providerId){
-                                streamingProviders.set(provider,providerId); 
-                            }
-                        }
+                        processProviders(tmdbData.results.US.flatrate);
                     }
                     if(tmdbData.results.US.ads){
-                        for(let i = 0; i<tmdbData.results.US.ads.length; i++){
-                            const provider = tmdbData.results.US.ads[i].provider_name;
-                            const providerId = tmdbData.results.US.ads[i].provider_id
-                            if(provider && selectiveServices.includes(provider) && providerId){
-                                streamingProviders.set(provider,providerId);
-                            }
-                        }
+                        processProviders(tmdbData.results.US.ads);
                     }
                 }
 
@@ -222,21 +238,22 @@ export default function ShowLinks(){
                 apiKey : RAPID_API_KEY
             }));
             const showData = await client.showsApi.getShow({
-                id : showId.toString()
+                id : `tv/${showId.toString()}`,
+                country : 'us'
             });
-            const streamingOptions = showData.streamingOptions;
-            if(streamingOptions && streamingOptions.us){
-                const streamingOptionsList = streamingOptions.us;
-                for(let i = 0; i <streamingOptionsList.length; i ++){
+            if(showData && showData.streamingOptions && showData.streamingOptions.us){
+                const streamingOptionsList = showData.streamingOptions.us;
+                for(let i = 0; i < streamingOptionsList.length; i++){
                     const serviceName = streamingOptionsList[i].service.name;
-                    if(streamingServicesOfShows.has(serviceName)){ 
+                    const normalizedServiceName = normalizeServiceName(serviceName);
+                    
+                    if(streamingServicesOfShows.has(serviceName) || streamingServicesOfShows.has(normalizedServiceName)){
                         const link = streamingOptionsList[i].link;
                         const videoLink = streamingOptionsList[i].videoLink;
                         if(videoLink){
-                            tempStreamingProvidersWithLinks.set(serviceName, videoLink);
-                        }
-                        else if(link){
-                            tempStreamingProvidersWithLinks.set(serviceName, link);
+                            tempStreamingProvidersWithLinks.set(normalizedServiceName, videoLink);
+                        } else if(link){
+                            tempStreamingProvidersWithLinks.set(normalizedServiceName, link);
                         }
                     }
                 }
@@ -300,10 +317,57 @@ export default function ShowLinks(){
     return(
         <ScrollView style={{ backgroundColor : "#3A3A3C", flex : 1 }} bounces={false} showsVerticalScrollIndicator={false}>
             <SafeAreaView style={styles.container}>
-
+                <Pressable
+                        onPress={() => navigation.goBack()}
+                        style={({pressed}) => [
+                            pressed && { opacity : 0.6 },
+                            styles.backButton
+                        ]}  
+                    >
+                        <Ionicons name="arrow-back" size={25} color="white"/>
+                    </Pressable>
+                    <Image source={{uri : showPoster}} style={styles.poster}/>
+                    <Text style={styles.showTitleText}>{showTitle}</Text>
+                    <View style={styles.episodeInfoContainer}>
+                        <Text style={styles.episodeNameText}>{episodeName}: </Text>
+                        <Text style={styles.episodeInfo}>Season {seasonNum}, Episode {episodeNum}</Text>
+                    </View>
+                    <Text style={styles.runtime}>{runtime} min runtime</Text>
+                    <Text style={styles.overview}>Episode Overview</Text>
+                    <Text style={styles.overviewText}>{overview}</Text>
+                    
+                    {orderedStreamingServices.size > 0 && (
+                        <View style={styles.streamingServicesContainer}>
+                            {Array.from(orderedStreamingServices.keys()).map((service) => {
+                                const link = orderedStreamingServices.get(service)
+                                return(
+                                    <Pressable
+                                        key={service}
+                                        onPress={() => link && openStreamingLink(service,link)}
+                                        style={({pressed}) => [
+                                            pressed && { opacity : 0.6},
+                                            styles.serviceButton
+                                        ]}
+                                        disabled={submitLoading}
+                                    >
+                                        <Text style={styles.linkButtonText}>{service}</Text>
+                                    </Pressable>
+                                )
+                            })}
+                        </View>
+                    )}
+                    {orderedStreamingServices.size === 0 && !loading && (
+                        <Text style={styles.noServicesFound}>No services have this show</Text>
+                    )}
+                    {submitLoading && (
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="small" color="#03AC13" />
+                            <Text style={styles.loadingText}>Episode loading</Text>
+                        </View>
+                    )}
             </SafeAreaView>
         </ScrollView>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
@@ -312,5 +376,98 @@ const styles = StyleSheet.create({
         flex : 1,
         alignItems : "center"
     },
-    
+    backButton : {
+        position: "absolute",
+        top: 50,
+        left: 15,
+        zIndex: 10,
+        padding: 10
+    },
+    poster : {
+        width: 150,    
+        height: 225,      
+        borderRadius: 6, 
+        marginTop : 60
+    },
+    showTitleText : {
+        color : "white",
+        fontSize : 25,
+        textAlign : "center",
+        marginHorizontal : 10,
+        fontWeight : "500"
+    },
+    episodeInfoContainer : {
+        flexDirection : "row",
+        marginTop : 5,
+        marginHorizontal : 10,
+        textAlign : "center",
+        justifyContent : "center",
+        flexWrap : "wrap"
+    },
+    episodeNameText : {
+        color : "white",
+        fontSize : 18,
+        textAlign : "center",
+        fontStyle : "italic"
+    },
+    episodeInfo : {
+        color : "white",
+        fontSize : 18,
+        textAlign : "center"
+    },
+    runtime : {
+        color : "#AEAEB2",
+        fontSize : 18,
+        marginTop : 5,
+        fontStyle : "italic"
+    },
+    overview : {
+        marginTop : 30,
+        fontWeight : "500",
+        color : "white",
+        fontSize : 18,
+        width : "90%"
+    },
+    overviewText : {
+        marginTop : 5,
+        color : "#AEAEB2",
+        fontSize : 15,
+        width : "90%",
+        fontStyle : "italic",
+    },
+    streamingServicesContainer : {
+        width: '90%',
+        marginTop: 20,
+        gap: 12, 
+    },
+    serviceButton : {
+        backgroundColor : "#03AC13",        
+        borderRadius : 8,
+        width: "100%", 
+        alignItems: "center"
+    },
+    linkButtonText : {
+        color : "white",
+        fontWeight : "500",
+        fontSize : 14,
+        paddingVertical : 12,
+    },
+    loadingContainer: {
+        padding: 15,
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 10,
+    },
+    loadingText: {
+        color: '#AEAEB2',
+        fontSize: 14,
+    },
+    noServicesFound : {
+        marginTop : 50,
+        color : "red",
+        fontSize : 20,
+        fontWeight : "500",
+        fontStyle : "italic"
+    }
 })
