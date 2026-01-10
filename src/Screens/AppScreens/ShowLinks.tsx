@@ -53,6 +53,7 @@ export default function ShowLinks(){
     const runtime = route.params.runTime;
     const showPoster = route.params.showPoster;
     const firstAirDate = route.params.firstAirDate;
+    const MAX_RECENT_ITEMS = 20;
 
     const selectiveServices = [
         "Amazon Prime Video",
@@ -174,14 +175,21 @@ export default function ShowLinks(){
             runTime : runtime,
             showFirstAirDate : firstAirDate
         };
-        const newSet = new Set(recentlyWatchedEP).add(newEpisode);
-        setRecentlyWatchedEP(newSet);
+        const episodeArrayForm = Array.from(recentlyWatchedEP);
+        const filteredEpisodeArray = episodeArrayForm.filter(ep => 
+            !(ep.showId === newEpisode.showId && 
+                ep.season === newEpisode.season && 
+                ep.num === newEpisode.num)
+        );
+        const updatedEpisodeArray = [newEpisode, ...filteredEpisodeArray];
+        const limitEpisodeArray = updatedEpisodeArray.slice(0,MAX_RECENT_ITEMS);
+        setRecentlyWatchedEP(new Set(limitEpisodeArray));
         const user = auth.currentUser;
 
         if(user && user.uid){
             try{
                 await updateDoc(doc(db,"users",user.uid),{
-                    recentlyWatchedEP : Array.from(newSet)
+                    recentlyWatchedEP : limitEpisodeArray
                 });
             }catch(error){
                 console.log(error);
@@ -196,14 +204,17 @@ export default function ShowLinks(){
             poster : showPoster,
             firstAirDate : firstAirDate
         };
-        const newSet = new Set(recenetlyWathcedShows).add(newShow);
-        setRecentlyWatchedShows(newSet);
+        const showArrayForm = Array.from(recenetlyWathcedShows);
+        const filtedShowArray = showArrayForm.filter(show => show.id !== newShow.id);
+        const updatedShowArray = [newShow, ...filtedShowArray];
+        const limitedShowArray = updatedShowArray.slice(0,MAX_RECENT_ITEMS);
+        setRecentlyWatchedShows(new Set(limitedShowArray));
         const user = auth.currentUser;
 
         if(user && user.uid){
             try{
                 await updateDoc(doc(db,"users",user.uid), {
-                    recentlyWatchedShows : Array.from(newSet)
+                    recentlyWatchedShows : limitedShowArray
                 })
             }catch(error){
                 console.log(error);
@@ -274,12 +285,14 @@ export default function ShowLinks(){
                 await Linking.openURL(appDeepLink);
                 await submitRecentlyWatchedEPToDB();
                 await submitRecentlyWatchedShowToDB();
+                navigation.navigate("NavBar", { screen: "Search" });
             }else{
                 const canAppOpen = await Linking.canOpenURL(webLink);
                 if(canAppOpen){
                     await Linking.openURL(webLink);
                     await submitRecentlyWatchedEPToDB();
                     await submitRecentlyWatchedShowToDB();
+                    navigation.navigate("NavBar", { screen: "Search" });
                 } else {
                     console.log("link cannot be open");
                 }
@@ -332,7 +345,13 @@ export default function ShowLinks(){
                     >
                         <Ionicons name="arrow-back" size={25} color="white"/>
                     </Pressable>
-                    <Image source={{uri : showPoster}} style={styles.poster}/>
+                    {showPoster ? (                    
+                        <Image source={{uri : showPoster}} style={styles.poster}/>
+                    ) : (
+                        <View style={[styles.poster, {backgroundColor : '#555', justifyContent : "center", alignItems : "center", marginBottom : 10}]}>
+                            <Text style={styles.noPoster}>?</Text>
+                        </View>
+                    )}
                     <Text style={styles.showTitleText}>{showTitle}</Text>
                     <View style={styles.episodeInfoContainer}>
                         <Text style={styles.episodeNameText}>{episodeName}: </Text>
@@ -476,4 +495,8 @@ const styles = StyleSheet.create({
         fontWeight : "500",
         fontStyle : "italic"
     },
+    noPoster : {
+        fontSize : 100,
+        color : "white",
+    }
 })

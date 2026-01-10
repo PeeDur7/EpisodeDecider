@@ -6,14 +6,13 @@ import LoginPage from './src/Screens/Authentication/Login';
 import WelcomePage from './src/Screens/Authentication/Welcome';
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth, saveUserToStorage, loadUserFromStorage } from './src/Firebase/FirebaseConfig';
-import HomePage from './src/Screens/AppScreens/Home';
+import { auth } from './src/Firebase/FirebaseConfig';
 import ForgotPasswordPage from './src/Screens/Authentication/ForgotPassword';
-import SearchPage from './src/Screens/AppScreens/Search';
-import SettingPage from './src/Screens/AppScreens/Setting';
 import NavBar from './src/Components/NavBar';
 import ShowInfo from './src/Screens/AppScreens/ShowInfo';
 import ShowLinks from './src/Screens/AppScreens/ShowLinks';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const Stack = createNativeStackNavigator();
 
@@ -21,23 +20,21 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   
   useEffect(() => {
-    loadUserFromStorage().then(user => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       setIsLoggedIn(!!user);
     });
-
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if(user){
-        saveUserToStorage(user);
-        setIsLoggedIn(true);
-      }
-      else setIsLoggedIn(false);
-    });
+    
     return unsubscribe;
-  },[]);
+  }, []);
 
   if(isLoggedIn === null){
     return(
-      <GestureHandlerRootView style={{ flex : 1, backgroundColor: "#3A3A3C" }}/>
+      <SafeAreaView style={styles.container}>
+          <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#03AC13" />
+              <Text style={styles.loadingText}>Loading page</Text>
+          </View>
+      </SafeAreaView>
     );
   }
 
@@ -64,4 +61,24 @@ export default function App() {
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  container : {
+    backgroundColor : "#3A3A3C",
+    flex : 1,
+    alignItems : "center",
+    justifyContent : "center"
+  },
+  loadingContainer: {
+    padding: 15,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+},
+  loadingText: {
+      color: '#AEAEB2',
+      fontSize: 14,
+  },
+});
 

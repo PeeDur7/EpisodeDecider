@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, db } from "../../Firebase/FirebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
@@ -8,7 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Text } from "react-native";
 import { RootStackParamList } from "../../Navigation/types";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { Image } from "react-native";
 import Constants from "expo-constants";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -48,18 +48,27 @@ export default function SearchPage(){
     const scrollViewRef = useRef<ScrollView>(null);
     const navigation = useNavigation<NavigationProp>();
 
-    useEffect(() => {
-        const user = auth.currentUser;
-        if(user && user.uid){
-            getDoc(doc(db,"users",user.uid)).then(userDoc => {
-                if(userDoc.exists() && userDoc.data().recentlyWatchedEP){
-                    //going to need to change once i implement recenetly watched episodes
-                    setRecentlyWatchedEP(userDoc.data().recentlyWatchedEP); 
+    const fetchUserData = useCallback(async () => {
+        try {
+            const user = auth.currentUser;
+            if (user && user.uid) {
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists() && userDoc.data().recentlyWatchedEP) {
+                    setRecentlyWatchedEP(userDoc.data().recentlyWatchedEP);
                 }
-            });
+            }
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
-    },[]);
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchUserData();
+        }, [fetchUserData])
+    );
 
     useEffect(() => {
         const delaySearch = setTimeout(() => {
@@ -154,13 +163,14 @@ export default function SearchPage(){
         } 
     };
 
-    const scrollToTop = () => {
-        scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-    };
-
     if(loading === true){
         return(
-            <SafeAreaView style={styles.container}/>
+            <SafeAreaView style={[styles.container, {justifyContent : "center"}]}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color="#03AC13" />
+                    <Text style={styles.loadingText}>Loading page</Text>
+                </View>
+            </SafeAreaView>
         );
     }
 
@@ -240,6 +250,7 @@ export default function SearchPage(){
                             ]}
                         >
                             <Text style={styles.loadMoreText}>Load more</Text>
+                            <Ionicons name="chevron-down" size={18} color="white" />
                         </Pressable>
                     )}
                     
@@ -253,28 +264,33 @@ export default function SearchPage(){
                                 {Array.from(recentlyWatchedEP)
                                 .slice(0,endIndexForRecent)
                                 .map((episode, index) => (
-                                    <Pressable
-                                        key={index}
-                                        style={({pressed}) => [
-                                            styles.recentlyWatchedEpisodes,
-                                            pressed && { opacity : 0.6}
-                                        ]}
-                                        onPress={() => navigation.navigate("ShowRedirect", {
-                                            showTitle : episode.show,
-                                            episodeName : episode.name,
-                                            episodeNum : episode.num,
-                                            seasonNum : episode.season,
-                                            showPoster : episode.poster,
-                                            showId : episode.showId,
-                                            overview : episode.overview,
-                                            runTime : episode.runTime,
-                                            firstAirDate : episode.showFirstAirDate
-                                        })}
-                                    >
-                                        <Text style={styles.showTitle}>{episode.show}</Text>
-                                        <Text style={styles.episode}>S{episode.season}E{episode.num} {episode.name}</Text>
+                                <Pressable
+                                    key={index}
+                                    style={({pressed}) => [
+                                        styles.recentlyWatchedEpisodes,
+                                        pressed && { opacity : 0.6}
+                                    ]}
+                                    onPress={() => navigation.navigate("ShowRedirect", {
+                                        showTitle : episode.show,
+                                        episodeName : episode.name,
+                                        episodeNum : episode.num,
+                                        seasonNum : episode.season,
+                                        showPoster : episode.poster,
+                                        showId : episode.showId,
+                                        overview : episode.overview,
+                                        runTime : episode.runTime,
+                                        firstAirDate : episode.showFirstAirDate
+                                    })}
+                                >
+                                    <View style={styles.episodeContent}>
+                                        <View style={styles.episodeTextContainer}>
+                                            <Text style={styles.showTitle}>{episode.show}</Text>
+                                            <Text style={styles.episode}>S{episode.season}E{episode.num} {episode.name}</Text>
+                                            <Text style={styles.episodeOverview}>{episode.overview}</Text>
+                                        </View>
                                         <Image style={styles.recentWatchedEPPoster} source={{uri : episode.poster}}/>
-                                    </Pressable>
+                                    </View>
+                                </Pressable>
                                 ))}
                             </View>
                         )}
@@ -289,6 +305,7 @@ export default function SearchPage(){
                             ]}
                         >
                             <Text style={styles.loadMoreText}>Load more</Text>
+                            <Ionicons name="chevron-down" size={18} color="white" />
                         </Pressable>
                     )}
                 </View>
@@ -326,8 +343,14 @@ const styles = StyleSheet.create({
     }, 
     episode : {
         color: "#AEAEB2",
-        fontSize: 14,
+        fontSize: 16,
+    },
+    episodeOverview : {
+        fontSize : 14,
+        fontStyle : "italic",
         marginBottom: 10,
+        color : "gray"
+
     },
     recentlyWatchedEpisodesContainer : {
         marginTop: 30,
@@ -347,18 +370,36 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 3,
     },
+    episodeContent: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    episodeTextContainer: {
+        flex: 1,
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
+    },
+    recentWatchedEPPoster : {
+        width: 80,    
+        height: 120,      
+        borderRadius: 6,
+        alignSelf : "center"
+    },
     loadMore : {
         marginTop : 15,
         backgroundColor : "#03AC13",        
-        borderRadius : 8,
+        borderRadius : 8, 
         width: "92%",
-        alignItems: "center"
+        alignItems: "center",
+        flexDirection: 'row',     
+        justifyContent: 'center',  
+        gap: 6,                   
+        paddingVertical: 14,  
     },
     loadMoreText : {
         color : "white",
         fontWeight: "600",
         fontSize : 15,
-        paddingVertical : 12,
     },
     noRecentWatchedEPText : {
         color: "#AEAEB2",
@@ -457,9 +498,4 @@ const styles = StyleSheet.create({
         color: '#AEAEB2',
         fontSize: 14,
     },
-    recentWatchedEPPoster : {
-        width: 100,    
-        height: 175,      
-        borderRadius: 6, 
-    }
 });

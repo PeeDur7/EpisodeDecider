@@ -2,10 +2,8 @@ export type RootStackParamList = {
     Login: undefined;
     Registration: undefined;
     Welcome: undefined;
-    Home : undefined;
     ForgotPassword : undefined;
-    Search : undefined;
-    Settings : undefined;
+    NavBar: { screen: 'Home' | 'Search' | 'Settings' } | undefined;
     ShowInfo : {
       showId : number;
       showPoster? : string;

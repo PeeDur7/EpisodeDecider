@@ -1,7 +1,7 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { RootStackParamList } from "../../Navigation/types";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useEffect, useState } from "react";
 import Constants from "expo-constants";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -29,6 +29,7 @@ export default function ShowInfo() {
     const [showDescription, setShowDescription] = useState("");
     const [genres, setGenres] = useState<string[]>([]);
     const [seasonsMap, setSeasonsMap] = useState<Map<string,number>>(new Map());
+    const [error, setError] = useState(false); //for shows with special case season names
     const route = useRoute<ShowInfoRouteProp>();
     const showTitle = route.params.showTitle; 
     const showId = route.params.showId;
@@ -71,7 +72,7 @@ export default function ShowInfo() {
             const randomSeasonString = `Season ${randomSeason}`;
             const episodesInSeason = seasonsMap.get(randomSeasonString);
             if(!episodesInSeason){
-                console.log(`Season ${randomSeason} not found`);
+                setError(true);
                 return;            
             }
             if(episodesInSeason){
@@ -114,8 +115,8 @@ export default function ShowInfo() {
                 const tempMap = new Map<string,number>();
                 let seasonCount = 0;
                 for(let index = 0; index < tmdbSearchData.seasons.length; index++){
-                    if(tmdbSearchData.seasons[index].name.toLowerCase().includes("season") && 
-                        tmdbSearchData.seasons[index].air_date !== null && tmdbSearchData.seasons[index].episode_count){
+                    if(!tmdbSearchData.seasons[index].name.toLowerCase().includes("specials") && 
+                        tmdbSearchData.seasons[index].episode_count > 0){
                         seasonCount++;
                         tempMap.set(tmdbSearchData.seasons[index].name,tmdbSearchData.seasons[index].episode_count);
                         dropDown.push(tmdbSearchData.seasons[index].name);
@@ -148,7 +149,12 @@ export default function ShowInfo() {
 
     if(loading){
         return(
-            <SafeAreaView style={styles.container}/>
+            <SafeAreaView style={[styles.container, {justifyContent : "center"}]}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color="#03AC13" />
+                    <Text style={styles.loadingText}>Loading page</Text>
+                </View>
+            </SafeAreaView>
         );
     }
 
@@ -200,6 +206,7 @@ export default function ShowInfo() {
                     <Text style={styles.description}>{showDescription}</Text>
                 </View>
                 <Text style={styles.selectSeasonRangeText}>Select Season Range</Text>
+                <Text style={styles.selectSeasonRangeTextWarning}>Shows with custom seasons name may not work</Text>
                 <DropdownBar
                     contents={new Set(dropDownText)}
                     initialText="All"
@@ -242,18 +249,23 @@ export default function ShowInfo() {
                         />
                     </View>
                 )}
-                <Pressable
-                    onPress={randomizeEpisode}
-                    style={({pressed}) => [
-                        styles.submitButton,
-                        pressed && { opacity : 0.6 }
-                    ]}
-                    disabled={submitLoading}
-                >   
-                    <Text style={styles.submitButtonText}>
-                        Randomize episode
-                    </Text>
-                </Pressable>
+                {!error && (
+                    <Pressable
+                        onPress={randomizeEpisode}
+                        style={({pressed}) => [
+                            styles.submitButton,
+                            pressed && { opacity : 0.6 }
+                        ]}
+                        disabled={submitLoading}
+                    >   
+                        <Text style={styles.submitButtonText}>
+                            Randomize episode
+                        </Text>
+                    </Pressable>
+                )}
+                {error && ( 
+                    <Text style={styles.showNotFound}>Show not available</Text>
+                )}
             </SafeAreaView>
         </ScrollView>
     );
@@ -356,6 +368,15 @@ const styles = StyleSheet.create({
         marginTop : 20,
         marginBottom : 5
     },
+    selectSeasonRangeTextWarning : {
+        color : "#AEAEB2",
+        fontSize : 15,
+        textAlign : "left",
+        width : "90%",
+        fontWeight : "500",
+        fontStyle : "italic",
+        marginBottom : 5
+    },
     customSeasonContainer: {
         width: "100%",
         alignItems: "center",
@@ -378,5 +399,23 @@ const styles = StyleSheet.create({
         fontWeight: "500",
         marginTop: 15,
         marginBottom: 5,
+    },
+    showNotFound : {
+        color : "red",
+        marginTop : 20,
+        fontWeight : "500",
+        fontSize : 20,
+        fontStyle : "italic"
+    },
+    loadingContainer: {
+        padding: 15,
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 10,
+    },
+    loadingText: {
+        color: '#AEAEB2',
+        fontSize: 14,
     },
 })  
