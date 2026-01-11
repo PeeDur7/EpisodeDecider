@@ -159,115 +159,120 @@ export default function ShowInfo() {
     }
 
     return (
-        <ScrollView style={{ backgroundColor : "#3A3A3C", flex : 1 }} bounces={false} showsVerticalScrollIndicator={false}>
-            <SafeAreaView style={styles.container}>
-                <Pressable
-                    onPress={() => navigation.goBack()}
-                    style={({pressed}) => [
-                        pressed && { opacity : 0.6 },
-                        styles.backButton
-                    ]}  
-                >
-                    <Ionicons name="arrow-back" size={25} color="white"/>
-                </Pressable>
-                {showPoster ? (
-                    <Image
-                        source={{uri : showPoster}}
-                        style={styles.poster}
-                    />
-                ) : (
-                    <View style={[styles.poster, {backgroundColor : '#555', justifyContent : "center", alignItems : "center"},]}>
-                        <Text style={styles.noPoster}>?</Text>
-                    </View>
-                )}
-                <Text style={styles.showTitle}>{showTitle}</Text>
-                <View style={styles.datesContainer}>
-                    <Text style={styles.datesText}>{firstAirDate}</Text>
-                    {totalSeasons > 0 && (
-                        <>
-                            <Text style={styles.datesText}>•</Text>
-                            <Text style={styles.datesText}>
-                                {totalSeasons} Season{totalSeasons === 1 ? "" : "s"}
-                            </Text>
-                        </>
-                    )}
-                </View>
-                {genres.length > 0 && (
-                    <View style={styles.genreTagsContainer}>
-                        {genres.map((genre,index) => (
-                            <View key={index} style={styles.genreTag}>
-                                <Text style={styles.genreText}>{genre}</Text>
-                            </View>
-                        ))}
-                    </View>
-                )}
-                <View>
-                    <Text style={styles.descriptionSubheading}>Overview</Text>
-                    <Text style={styles.description}>{showDescription}</Text>
-                </View>
-                <Text style={styles.selectSeasonRangeText}>Select Season Range</Text>
-                <Text style={styles.selectSeasonRangeTextWarning}>Shows with custom seasons name may not work</Text>
-                <DropdownBar
-                    contents={new Set(dropDownText)}
-                    initialText="All"
-                    onSelectionChange={(value) => changeCustomSeasonRange(value)}
-                    disabled={submitLoading}
+        <SafeAreaView style={styles.container}>
+            <Pressable
+                onPress={() => navigation.goBack()}
+                style={({pressed}) => [
+                    pressed && { opacity : 0.6 },
+                    styles.backButton
+                ]}  
+            >
+                <Ionicons name="arrow-back" size={25} color="white"/>
+            </Pressable>
+            <ScrollView 
+                style={{ backgroundColor : "#3A3A3C", flex : 1, width: '100%' }} 
+                bounces={false} 
+                showsVerticalScrollIndicator={false} 
+                contentContainerStyle={{alignItems : "center", paddingTop : 10}}                
+            >
+            {showPoster ? (
+                <Image
+                    source={{uri : showPoster}}
+                    style={styles.poster}
                 />
-                {customSeasonRange && (
-                    <View style={styles.customSeasonContainer}>
-                        <Text style={styles.customSeasonStartText}>Season start range</Text>
-                        <DropdownBar
-                            contents={new Set(
-                                Array.from(seasonsMap.keys()).filter(season => {
-                                    const seasonNum = parseInt(season.replace(/\D/g, ''));
-                                    const currentEndRange = endSeasonRange === 0 ? totalSeasons : endSeasonRange;
-                                    return seasonNum < currentEndRange;
-                                })
-                            )}
-                            initialText="Season 1"
-                            onSelectionChange={(value) => {
-                                const seasonNum = parseInt(value.replace(/\D/g, ''));
-                                setStartSeasonRange(seasonNum);
-                            }}
-                            disabled={submitLoading}
-                        />
-                        <Text style={styles.customSeasonsEndText}>Season end range</Text>
-                        <DropdownBar
-                            contents={new Set(
-                                Array.from(seasonsMap.keys()).filter(season => {
-                                    const seasonNum = parseInt(season.replace(/\D/g, ''));
-                                    const currentStartRange = startSeasonRange === 0 ? 1 : startSeasonRange;
-                                    return seasonNum > currentStartRange;
-                                })
-                            )}
-                            initialText={`Season ${totalSeasons}`}
-                            onSelectionChange={(value) => {
-                                const seasonNum = parseInt(value.replace(/\D/g, ''));
-                                setEndSeasonRange(seasonNum);
-                            }}
-                            disabled={submitLoading}
-                        />
-                    </View>
-                )}
-                {!error && (
-                    <Pressable
-                        onPress={randomizeEpisode}
-                        style={({pressed}) => [
-                            styles.submitButton,
-                            pressed && { opacity : 0.6 }
-                        ]}
-                        disabled={submitLoading}
-                    >   
-                        <Text style={styles.submitButtonText}>
-                            Randomize episode
+            ) : (
+                <View style={[styles.poster, {backgroundColor : '#555', justifyContent : "center", alignItems : "center"},]}>
+                    <Text style={styles.noPoster}>?</Text>
+                </View>
+            )}
+            <Text style={styles.showTitle}>{showTitle}</Text>
+            <View style={styles.datesContainer}>
+                <Text style={styles.datesText}>{firstAirDate}</Text>
+                {totalSeasons > 0 && (
+                    <>
+                        <Text style={styles.datesText}>•</Text>
+                        <Text style={styles.datesText}>
+                            {totalSeasons} Season{totalSeasons === 1 ? "" : "s"}
                         </Text>
-                    </Pressable>
+                    </>
                 )}
-                {error && ( 
-                    <Text style={styles.showNotFound}>Show not available</Text>
-                )}
-            </SafeAreaView>
-        </ScrollView>
+            </View>
+            {genres.length > 0 && (
+                <View style={styles.genreTagsContainer}>
+                    {genres.map((genre,index) => (
+                        <View key={index} style={styles.genreTag}>
+                            <Text style={styles.genreText}>{genre}</Text>
+                        </View>
+                    ))}
+                </View>
+            )}
+            <View>
+                <Text style={styles.descriptionSubheading}>Overview</Text>
+                <Text style={styles.description}>{showDescription}</Text>
+            </View>
+            <Text style={styles.selectSeasonRangeText}>Select Season Range</Text>
+            <Text style={styles.selectSeasonRangeTextWarning}>Shows with custom seasons name may not work</Text>
+            <DropdownBar
+                contents={new Set(dropDownText)}
+                initialText="All"
+                onSelectionChange={(value) => changeCustomSeasonRange(value)}
+                disabled={submitLoading}
+            />
+            {customSeasonRange && (
+                <View style={styles.customSeasonContainer}>
+                    <Text style={styles.customSeasonStartText}>Season start range</Text>
+                    <DropdownBar
+                        contents={new Set(
+                            Array.from(seasonsMap.keys()).filter(season => {
+                                const seasonNum = parseInt(season.replace(/\D/g, ''));
+                                const currentEndRange = endSeasonRange === 0 ? totalSeasons : endSeasonRange;
+                                return seasonNum < currentEndRange;
+                            })
+                        )}
+                        initialText="Season 1"
+                        onSelectionChange={(value) => {
+                            const seasonNum = parseInt(value.replace(/\D/g, ''));
+                            setStartSeasonRange(seasonNum);
+                        }}
+                        disabled={submitLoading}
+                    />
+                    <Text style={styles.customSeasonsEndText}>Season end range</Text>
+                    <DropdownBar
+                        contents={new Set(
+                            Array.from(seasonsMap.keys()).filter(season => {
+                                const seasonNum = parseInt(season.replace(/\D/g, ''));
+                                const currentStartRange = startSeasonRange === 0 ? 1 : startSeasonRange;
+                                return seasonNum > currentStartRange;
+                            })
+                        )}
+                        initialText={`Season ${totalSeasons}`}
+                        onSelectionChange={(value) => {
+                            const seasonNum = parseInt(value.replace(/\D/g, ''));
+                            setEndSeasonRange(seasonNum);
+                        }}
+                        disabled={submitLoading}
+                    />
+                </View>
+            )}
+            {!error && (
+                <Pressable
+                    onPress={randomizeEpisode}
+                    style={({pressed}) => [
+                        styles.submitButton,
+                        pressed && { opacity : 0.6 }
+                    ]}
+                    disabled={submitLoading}
+                >   
+                    <Text style={styles.submitButtonText}>
+                        Randomize episode
+                    </Text>
+                </Pressable>
+            )}
+            {error && ( 
+                <Text style={styles.showNotFound}>Show not available</Text>
+            )}
+            </ScrollView>
+        </SafeAreaView>
     );
 }
 

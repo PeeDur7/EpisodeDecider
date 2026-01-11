@@ -285,14 +285,12 @@ export default function ShowLinks(){
                 await Linking.openURL(appDeepLink);
                 await submitRecentlyWatchedEPToDB();
                 await submitRecentlyWatchedShowToDB();
-                navigation.navigate("NavBar", { screen: "Search" });
             }else{
                 const canAppOpen = await Linking.canOpenURL(webLink);
                 if(canAppOpen){
                     await Linking.openURL(webLink);
                     await submitRecentlyWatchedEPToDB();
                     await submitRecentlyWatchedShowToDB();
-                    navigation.navigate("NavBar", { screen: "Search" });
                 } else {
                     console.log("link cannot be open");
                 }
@@ -306,17 +304,21 @@ export default function ShowLinks(){
 
     const convertToAppDeepLink = (serviceName : string, webLink : string) => {
         if(serviceName === "Netflix"){
-            return webLink.replace("https://","nflx://");
+            const titleMatch = webLink.match(/\/title\/(\d+)/); //get show id for netflix url
+            if(titleMatch){
+                return `nflx://www.netflix.com/title/${titleMatch[1]}`;
+            }
+            return webLink.replace("https://www.netflix.com","nflx://www.netflix.com");
         }else if(serviceName === "Prime Video"){
-            return webLink;
+            return webLink.replace("https://","primevideo://");
         }else if(serviceName === "Disney Plus" || serviceName === "Disney+"){
-            return webLink;
+            return webLink.replace("https://www.disneyplus.com","disneyplus://");
         }else if(serviceName === "Hulu"){
             return webLink.replace("https://www.hulu.com/","hulu://");
         }else if(serviceName === "Paramount Plus" || serviceName === "Paramount+"){
             return webLink.replace("https://www.paramountplus.com/", "paramountplus://");
-        }else if(serviceName === "HBO Max"){
-            return webLink;
+        }else if(serviceName === "Max" || serviceName === "HBO Max"){
+            return webLink.replace("https://","max://");
         }else{
             return webLink;
         }
@@ -334,7 +336,6 @@ export default function ShowLinks(){
     }
 
     return(
-        <ScrollView style={{ backgroundColor : "#3A3A3C", flex : 1 }} bounces={false} showsVerticalScrollIndicator={false}>
             <SafeAreaView style={styles.container}>
                 <Pressable
                         onPress={() => navigation.goBack()}
@@ -344,7 +345,13 @@ export default function ShowLinks(){
                         ]}  
                     >
                         <Ionicons name="arrow-back" size={25} color="white"/>
-                    </Pressable>
+                </Pressable>
+                <ScrollView 
+                    style={{ backgroundColor : "#3A3A3C", flex : 1, width: '100%' }} 
+                    bounces={false} 
+                    showsVerticalScrollIndicator={false} 
+                    contentContainerStyle={{alignItems : "center", paddingTop : 10}}                
+                >
                     {showPoster ? (                    
                         <Image source={{uri : showPoster}} style={styles.poster}/>
                     ) : (
@@ -390,8 +397,8 @@ export default function ShowLinks(){
                             <Text style={styles.loadingText}>Episode loading</Text>
                         </View>
                     )}
-            </SafeAreaView>
-        </ScrollView>
+                </ScrollView>
+        </SafeAreaView>
     );
 }
 
