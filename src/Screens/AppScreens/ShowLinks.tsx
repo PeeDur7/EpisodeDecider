@@ -310,14 +310,34 @@ export default function ShowLinks(){
             }
             return webLink.replace("https://www.netflix.com","nflx://www.netflix.com");
         }else if(serviceName === "Prime Video"){
+            const asinMatch = webLink.match(/\/(dp|gp\/video\/detail)\/([A-Z0-9]+)/);
+            if (asinMatch) {
+                return `primevideo://watch/${asinMatch[2]}`;
+            }
             return webLink.replace("https://","primevideo://");
         }else if(serviceName === "Disney Plus" || serviceName === "Disney+"){
+            const match = webLink.match(/\/(movies|series)\/([a-z0-9-]+)/i);
+            if(match){
+                return `disneyplus://${match[1]}/${match[2]}`;
+            }
             return webLink.replace("https://www.disneyplus.com","disneyplus://");
         }else if(serviceName === "Hulu"){
+            const huluMatch = webLink.match(/\/(watch|series)\/([0-9a-f-]+)/);
+            if (huluMatch) {
+                return `hulu://${huluMatch[1]}/${huluMatch[2]}`;
+            }
             return webLink.replace("https://www.hulu.com/","hulu://");
         }else if(serviceName === "Paramount Plus" || serviceName === "Paramount+"){
+            const match = webLink.match(/\/(shows|movies)\/[^/]+\/([a-z0-9-]+)/i);
+            if(match){
+                return `paramountplus://${match[1]}/${match[2]}`;
+            }
             return webLink.replace("https://www.paramountplus.com/", "paramountplus://");
         }else if(serviceName === "Max" || serviceName === "HBO Max"){
+            const match = webLink.match(/feature\/urn:hbo:feature:([a-z0-9-]+)/i);
+            if(match){
+                return `max://feature/${match[1]}`;
+            }
             return webLink.replace("https://","max://");
         }else{
             return webLink;
