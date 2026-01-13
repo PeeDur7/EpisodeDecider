@@ -1,5 +1,5 @@
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { ActivityIndicator, Image, Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Image, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { RootStackParamList } from "../../Navigation/types";
@@ -162,8 +162,8 @@ export default function ShowLinks(){
             sortStreamingProviders();
         }
     },[streamingServicesWithLinks,usersPreferedServices]);
-
-    const submitRecentlyWatchedEPToDB = async () => {
+    
+    const submitRecentlyWatchedToDB = async () => {
         const newEpisode : userWatchedEpisodes = {
             show : showTitle,
             showId : showId,
@@ -183,39 +183,28 @@ export default function ShowLinks(){
         );
         const updatedEpisodeArray = [newEpisode, ...filteredEpisodeArray];
         const limitEpisodeArray = updatedEpisodeArray.slice(0,MAX_RECENT_ITEMS);
-        setRecentlyWatchedEP(new Set(limitEpisodeArray));
-        const user = auth.currentUser;
 
-        if(user && user.uid){
-            try{
-                await updateDoc(doc(db,"users",user.uid),{
-                    recentlyWatchedEP : limitEpisodeArray
-                });
-            }catch(error){
-                console.log(error);
-            }
-        }
-    };
-
-    const submitRecentlyWatchedShowToDB = async () => {
         const newShow : userWatchedShows = {
             id : showId,
             showTitle : showTitle,
             poster : showPoster,
-            firstAirDate : firstAirDate
+            firstAirDate : firstAirDate,
         };
         const showArrayForm = Array.from(recenetlyWathcedShows);
         const filtedShowArray = showArrayForm.filter(show => show.id !== newShow.id);
         const updatedShowArray = [newShow, ...filtedShowArray];
         const limitedShowArray = updatedShowArray.slice(0,MAX_RECENT_ITEMS);
+
+        setRecentlyWatchedEP(new Set(limitEpisodeArray));
         setRecentlyWatchedShows(new Set(limitedShowArray));
         const user = auth.currentUser;
 
         if(user && user.uid){
             try{
-                await updateDoc(doc(db,"users",user.uid), {
+                await updateDoc(doc(db,"users",user.uid),{
+                    recentlyWatchedEP : limitEpisodeArray,
                     recentlyWatchedShows : limitedShowArray
-                })
+                });
             }catch(error){
                 console.log(error);
             }
@@ -278,69 +267,25 @@ export default function ShowLinks(){
 
     const openStreamingLink = async (serviceName: string, webLink: string) => {
         setSubmitLoading(true);
-        try{
-            const appDeepLink = convertToAppDeepLink(serviceName, webLink);
-            const canOpenAppDeepLink = await Linking.canOpenURL(appDeepLink);
-            if(canOpenAppDeepLink){
-                await Linking.openURL(appDeepLink);
-                await submitRecentlyWatchedEPToDB();
-                await submitRecentlyWatchedShowToDB();
-            }else{
-                const canAppOpen = await Linking.canOpenURL(webLink);
-                if(canAppOpen){
-                    await Linking.openURL(webLink);
-                    await submitRecentlyWatchedEPToDB();
-                    await submitRecentlyWatchedShowToDB();
-                } else {
-                    console.log("link cannot be open");
+        try {
+            //prime does not allow deep links to episodes or shows so just open the app and let users do the rest
+            if (serviceName === "Prime Video") {
+                try {
+                    await Linking.openURL('primevideo://');
+                    await submitRecentlyWatchedToDB();
+                    return;
+                } catch (primeError) {
+                    console.log('Could not open Prime Video app, using web link');
                 }
             }
-        }catch(error){
-            console.log(error);
-        }finally{
+            
+            await Linking.openURL(webLink);
+            await submitRecentlyWatchedToDB();
+            
+        } catch (error) {
+            console.error("Error opening streaming link:", error);
+        } finally {
             setSubmitLoading(false);
-        }
-    }
-
-    const convertToAppDeepLink = (serviceName : string, webLink : string) => {
-        if(serviceName === "Netflix"){
-            const titleMatch = webLink.match(/\/title\/(\d+)/); //get show id for netflix url
-            if(titleMatch){
-                return `nflx://www.netflix.com/title/${titleMatch[1]}`;
-            }
-            return webLink.replace("https://www.netflix.com","nflx://www.netflix.com");
-        }else if(serviceName === "Prime Video"){
-            const asinMatch = webLink.match(/\/(dp|gp\/video\/detail)\/([A-Z0-9]+)/);
-            if (asinMatch) {
-                return `primevideo://watch/${asinMatch[2]}`;
-            }
-            return webLink.replace("https://","primevideo://");
-        }else if(serviceName === "Disney Plus" || serviceName === "Disney+"){
-            const match = webLink.match(/\/(movies|series)\/([a-z0-9-]+)/i);
-            if(match){
-                return `disneyplus://${match[1]}/${match[2]}`;
-            }
-            return webLink.replace("https://www.disneyplus.com","disneyplus://");
-        }else if(serviceName === "Hulu"){
-            const huluMatch = webLink.match(/\/(watch|series)\/([0-9a-f-]+)/);
-            if (huluMatch) {
-                return `hulu://${huluMatch[1]}/${huluMatch[2]}`;
-            }
-            return webLink.replace("https://www.hulu.com/","hulu://");
-        }else if(serviceName === "Paramount Plus" || serviceName === "Paramount+"){
-            const match = webLink.match(/\/(shows|movies)\/[^/]+\/([a-z0-9-]+)/i);
-            if(match){
-                return `paramountplus://${match[1]}/${match[2]}`;
-            }
-            return webLink.replace("https://www.paramountplus.com/", "paramountplus://");
-        }else if(serviceName === "Max" || serviceName === "HBO Max"){
-            const match = webLink.match(/feature\/urn:hbo:feature:([a-z0-9-]+)/i);
-            if(match){
-                return `max://feature/${match[1]}`;
-            }
-            return webLink.replace("https://","max://");
-        }else{
-            return webLink;
         }
     };
 

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "11707205298",
+    "project_id": "episoderoulette",
+    "storage_bucket": "episoderoulette.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:11707205298:android:3dbcc362b1f437336d6bab",
+        "android_client_info": {
+          "package_name": "com.episoderoulette.episoderoulette"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3cKHtKBIy5bOGoU2TYzwmhWy6QGh2kFM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

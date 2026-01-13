@@ -21,34 +21,6 @@
     },
     "ios": {
       "supportsTablet": true,
-      "infoPlist": {
-        "LSApplicationQueriesSchemes": [
-          "nflx",
-          "hulu",
-          "primevideo",
-          "disneyplus",
-          "paramountplus",
-          "max",
-          "nflx",
-          "hulu",
-          "primevideo",
-          "disneyplus",
-          "paramountplus",
-          "max",
-          "nflx",
-          "hulu",
-          "primevideo",
-          "disneyplus",
-          "paramountplus",
-          "max",
-          "nflx",
-          "hulu",
-          "primevideo",
-          "disneyplus",
-          "paramountplus",
-          "max"
-        ]
-      },
       "bundleIdentifier": "com.peedur.EpisodeDecider"
     },
     "android": {
