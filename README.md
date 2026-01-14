@@ -68,34 +68,37 @@ This app is intended to **run locally on a mobile device or emulator** and is no
    git clone https://github.com/your-username/EpisodeRoulette.git
    cd EpisodeRoulette
 
-2. **Install dependencies**
+**2. Install dependencies**
 
-  npm install
+  - npm install
+  - npm install firebase
 
-3. **Environment Variables**
+**3. Environment Variables**
 
-Create a .env file in the project root and add the following:
+   Create a .env file in the project root and add the following:
 
-  TMDB_API_KEY=your_tmdb_key
-  TVMAZE_API_KEY=your_tvmaze_key
-  RAPID_API_KEY=your_rapidapi_key
+  - TMDB_API_KEY=your_tmdb_key
+  - TVMAZE_API_KEY=your_tvmaze_key
+  - RAPID_API_KEY=your_rapidapi_key
   
-  FIREBASE_API_KEY=your_firebase_api_key
-  FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
-  FIREBASE_PROJECT_ID=your_firebase_project_id
-  FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
-  FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
-  FIREBASE_APP_ID=your_firebase_app_id
+  - FIREBASE_API_KEY=your_firebase_api_key
+  - FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+  - FIREBASE_PROJECT_ID=your_firebase_project_id
+  - FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
+  - FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
+  - FIREBASE_APP_ID=your_firebase_app_id
 
-4. **Run the application**
+**4. Run the application**
 
  - npx expo start
 
-5. **Open the app using**
+**5. Open the app using**
 
- - Expo Go on a physical device, or
+ - Expo Go on a physical device,
 
  - An iOS or Android emulator
+
+ - Running the app on a physical device
 
 ## 🎯 Motivation
  EpisodeRoulette was built to solve a personal problem: spending too much time deciding which episode to watch for low-plot TV shows. Instead of endlessly browsing seasons and reading episode summaries, this app removes    the decision-making process entirely by generating a random episode with a single click.
@@ -112,15 +115,15 @@ Create a .env file in the project root and add the following:
  - Designing user-focused features that prioritize speed and convenience
 
 ## 🔮 Future Improvements
- - UI/UX redesign for a more polished experience
+- UI/UX redesign for a more polished experience
 
- - Improved animations and transitions
+- Improved animations and transitions
 
- - Additional episode filters (ratings, runtime, popularity)
+- Additional episode filters (ratings, runtime, popularity)
 
- - Offline support for previously fetched content
+- Offline support for previously fetched content
 
- - User analytics and viewing statistics
+- User analytics and viewing statistics
 
 ## 📄 License
  This project is licensed under the MIT License.
