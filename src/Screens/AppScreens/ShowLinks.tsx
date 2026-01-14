@@ -288,7 +288,7 @@ export default function ShowLinks(){
             setSubmitLoading(false);
         }
     };
-
+    
     if(loading){
         return(
             <SafeAreaView style={[styles.container, {justifyContent : "center"}]}>
@@ -332,6 +332,7 @@ export default function ShowLinks(){
                     <Text style={styles.runtime}>{runtime} min runtime</Text>
                     <Text style={styles.overview}>Episode Overview</Text>
                     <Text style={styles.overviewText}>{overview}</Text>
+                    <Text style={styles.warning}>Season and episode numbers may vary slightly depending on streaming services ordering</Text>
 
                     {orderedStreamingServices.size > 0 && (
                         <View style={styles.streamingServicesContainer}>
@@ -470,5 +471,19 @@ const styles = StyleSheet.create({
     noPoster : {
         fontSize : 100,
         color : "white",
+    },
+    warning: {
+        marginTop: 15,
+        marginBottom: 10,
+        color: "#FFD700",
+        fontSize: 13,
+        width: "90%",
+        fontStyle: "italic",
+        textAlign: "center",
+        backgroundColor: "rgba(255, 215, 0, 0.1)",
+        padding: 10,
+        borderRadius: 6,
+        borderLeftWidth: 3,
+        borderLeftColor: "#FFD700",
     }
 })
