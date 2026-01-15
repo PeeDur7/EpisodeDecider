@@ -1,11 +1,8 @@
 {
   "expo": {
     "extra": {
-      "tmdbApiKey": "5b0b29220dedabea7d028b0b210e9deb",
-      "movieOfTheNightApiKey": "18fedaec77mshe9832092c3b24d4p17228ajsn6b86327cdb15",
-      "eas": {
-        "projectId": "fed823f0-d658-486d-a95a-f2b76fb28bb1"
-      }
+      "tmdbApiKey": "f162ac735a86cf8e7c2c96039567f6d4",
+      "movieOfTheNightApiKey": "18fedaec77mshe9832092c3b24d4p17228ajsn6b86327cdb15"
     },
     "name": "EpisodeDecider",
     "slug": "EpisodeDecider",
