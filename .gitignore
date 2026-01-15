@@ -45,3 +45,4 @@ yarn-error.*
 .env.*
 
 .GoogleService-Info.plist
+.google-services.json
