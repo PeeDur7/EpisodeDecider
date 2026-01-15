@@ -43,3 +43,5 @@ yarn-error.*
 # environment variables
 .env
 .env.*
+
+.GoogleService-Info.plist
